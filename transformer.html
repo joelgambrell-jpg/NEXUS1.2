@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Redirecting…</title>
+</head>
+<body>
+  <script>
+    const qs = new URLSearchParams(location.search);
+    const eq = (qs.get('eq') || '').trim();
+    const u = new URL('form.html', location.href);
+    u.searchParams.set('id','transformer');
+    if (eq) u.searchParams.set('eq', eq);
+    location.replace(u.pathname.split('/').pop() + u.search);
+  </script>
+</body>
+</html>
