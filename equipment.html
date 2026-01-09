@@ -6,54 +6,52 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <style>
-    /* ===== GLOBAL ===== */
     body {
       margin: 0;
       font-family: Arial, Helvetica, sans-serif;
-      background: #b5121b; /* red background */
+      background: #b5121b;
       color: #ffffff;
     }
 
-    /* ===== HEADER / LOGO ===== */
     .nexus-header {
       display: flex;
       justify-content: center;
       align-items: center;
       padding: 18px 0;
-      background: #ffffff; /* keep logo readable */
+      background: #ffffff;
     }
+
     .nexus-logo {
       height: 64px;
       width: auto;
       display: block;
     }
 
-    /* ===== HERO ===== */
     .hero {
       background: linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.45)),
         url("assets/transformer.jpg") center / cover no-repeat;
       padding: 42px 16px;
       text-align: center;
     }
+
     .hero h1 {
       margin: 0;
       font-size: 30px;
       font-weight: 700;
     }
+
     .hero p {
       margin-top: 8px;
       font-size: 16px;
       opacity: 0.95;
     }
 
-    /* ===== WRAPPER ===== */
     .container {
       max-width: 900px;
       margin: 26px auto 40px;
       padding: 0 16px;
     }
 
-    /* ===== SECTIONS / CARDS ===== */
     .section {
       background: #ffffff;
       color: #222;
@@ -62,6 +60,7 @@
       margin-bottom: 22px;
       overflow: hidden;
     }
+
     .section-header {
       padding: 16px 20px;
       font-size: 18px;
@@ -69,12 +68,11 @@
       background: #f2f2f2;
       border-bottom: 1px solid #d0d0d0;
       display: flex;
-      align-items: center;
       justify-content: space-between;
-      gap: 12px;
-      user-select: none;
+      align-items: center;
     }
-    .section-header .hint {
+
+    .hint {
       font-size: 12px;
       color: #666;
       font-weight: 600;
@@ -86,6 +84,7 @@
       gap: 18px;
       padding: 20px;
     }
+
     .card {
       background: #ffffff;
       border: 1px solid #d0d0d0;
@@ -94,29 +93,29 @@
       cursor: pointer;
       transition: transform 0.15s ease, box-shadow 0.15s ease;
     }
+
     .card:hover {
       transform: translateY(-3px);
       box-shadow: 0 6px 14px rgba(0,0,0,0.2);
     }
+
     .card h3 {
       margin: 0 0 6px 0;
       font-size: 16px;
       color: #b5121b;
     }
+
     .card p {
       margin: 0;
       font-size: 14px;
       color: #555;
     }
 
-    /* ===== DROPDOWN (SUPPORTING DOCS) ===== */
-    details.dropdown {
-      border-top: 0;
-    }
     details.dropdown > summary {
       list-style: none;
       cursor: pointer;
     }
+
     details.dropdown > summary::-webkit-details-marker {
       display: none;
     }
@@ -128,16 +127,13 @@
       border-bottom: 2px solid #777;
       transform: rotate(45deg);
       transition: transform 0.15s ease;
-      flex: 0 0 auto;
       margin-left: 10px;
     }
+
     details[open] .chev {
       transform: rotate(-135deg);
     }
 
-    /* Keep tasks always visible: no dropdown styles applied there */
-
-    /* ===== FOOTER ===== */
     .footer {
       text-align: center;
       font-size: 12px;
@@ -148,13 +144,12 @@
 </head>
 
 <body>
-  <!-- ===== LOGO HEADER ===== -->
+
+  <!-- LOGO HEADER -->
   <header class="nexus-header">
-    <!-- If your filename/path differs, change src only -->
-    <img src="assets/nexus_logo.png" alt="NEXUS Logo" class="nexus-logo">
+    <img src="assets/nexus.png" alt="NEXUS Logo" class="nexus-logo">
   </header>
 
-  <!-- ===== HERO ===== -->
   <div class="hero">
     <h1>Equipment: TR-001</h1>
     <p>NEXUS Quality & Verification System</p>
@@ -162,7 +157,7 @@
 
   <div class="container">
 
-    <!-- ===== TASKS (ALWAYS VISIBLE) ===== -->
+    <!-- TASKS -->
     <div class="section">
       <div class="section-header">
         <span>Tasks to Complete</span>
@@ -190,6 +185,11 @@
           <p>Level 2 in-process verification</p>
         </div>
 
+        <div class="card" onclick="location.href='construction_check.html'">
+          <h3>Construction Check Sheet</h3>
+          <p>Assembly verification</p>
+        </div>
+
         <div class="card" onclick="location.href='submit.html?form=prefod'">
           <h3>Pre-FOD</h3>
           <p>Foreign object damage check</p>
@@ -197,14 +197,14 @@
       </div>
     </div>
 
-    <!-- ===== SUPPORTING DOCS (DROPDOWN) ===== -->
+    <!-- SUPPORTING DOCS -->
     <div class="section">
       <details class="dropdown">
         <summary class="section-header">
           <span>Supporting Documents</span>
           <span style="display:flex;align-items:center;gap:10px;">
             <span class="hint">Tap to expand</span>
-            <span class="chev" aria-hidden="true"></span>
+            <span class="chev"></span>
           </span>
         </summary>
 
@@ -217,11 +217,6 @@
           <div class="card" onclick="location.href='supporting_documents.html'">
             <h3>Supporting Documents</h3>
             <p>Additional reference material</p>
-          </div>
-
-          <div class="card" onclick="location.href='construction_check.html'">
-            <h3>Construction Check Sheet</h3>
-            <p>Assembly verification</p>
           </div>
 
           <div class="card" onclick="location.href='phenolic_display.html'">
@@ -237,7 +232,8 @@
       </details>
     </div>
 
-    <div class="footer">© NEXUS Quality System</div>
+    <div class="footer">© NEXUS Data Science Quality Systems Division</div>
   </div>
+
 </body>
 </html>
