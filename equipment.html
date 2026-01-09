@@ -70,12 +70,14 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      gap: 12px;
     }
 
     .hint {
       font-size: 12px;
       color: #666;
       font-weight: 600;
+      white-space: nowrap;
     }
 
     .card-list {
@@ -111,6 +113,7 @@
       color: #555;
     }
 
+    /* Supporting Docs dropdown */
     details.dropdown > summary {
       list-style: none;
       cursor: pointer;
@@ -128,6 +131,7 @@
       transform: rotate(45deg);
       transition: transform 0.15s ease;
       margin-left: 10px;
+      flex: 0 0 auto;
     }
 
     details[open] .chev {
@@ -145,19 +149,19 @@
 
 <body>
 
-  <!-- LOGO HEADER -->
+  <!-- LOGO HEADER (logo file is at site root) -->
   <header class="nexus-header">
-   <img src="nexus.png" alt="NEXUS Logo" class="nexus-logo">
+    <img src="nexus.png" alt="NEXUS Logo" class="nexus-logo">
   </header>
 
   <div class="hero">
-    <h1>Equipment: TR-001</h1>
+    <h1>Equipment: <span id="eqId">—</span></h1>
     <p>NEXUS Quality & Verification System</p>
   </div>
 
   <div class="container">
 
-    <!-- TASKS -->
+    <!-- TASKS (ALWAYS VISIBLE) -->
     <div class="section">
       <div class="section-header">
         <span>Tasks to Complete</span>
@@ -165,75 +169,112 @@
       </div>
 
       <div class="card-list">
-        <div class="card" onclick="location.href='submit.html?form=rif'">
+        <a class="card" href="submit.html?form=rif">
           <h3>RIF</h3>
           <p>Receiving Inspection Form</p>
-        </div>
+        </a>
 
-        <div class="card" onclick="location.href='equipment_meg.html'">
+        <a class="card" href="equipment_meg.html">
           <h3>Megohmmeter Testing</h3>
           <p>Megger testing of conductors</p>
-        </div>
+        </a>
 
-        <div class="card" onclick="location.href='submit.html?form=torque'">
+        <a class="card" href="submit.html?form=torque">
           <h3>Torque</h3>
           <p>Torque verification</p>
-        </div>
+        </a>
 
-        <div class="card" onclick="location.href='submit.html?form=l2ivf'">
+        <a class="card" href="submit.html?form=l2ivf">
           <h3>L2-IVF</h3>
           <p>Level 2 in-process verification</p>
-        </div>
+        </a>
 
-        <div class="card" onclick="location.href='construction_check.html'">
+        <a class="card" href="construction_check.html">
           <h3>Construction Check Sheet</h3>
           <p>Assembly verification</p>
-        </div>
+        </a>
 
-        <div class="card" onclick="location.href='submit.html?form=prefod'">
+        <a class="card" href="submit.html?form=prefod">
           <h3>Pre-FOD</h3>
           <p>Foreign object damage check</p>
-        </div>
+        </a>
       </div>
     </div>
 
-    <!-- SUPPORTING DOCS -->
+    <!-- SUPPORTING DOCS (DROPDOWN) -->
     <div class="section">
       <details class="dropdown">
         <summary class="section-header">
           <span>Supporting Documents</span>
           <span style="display:flex;align-items:center;gap:10px;">
             <span class="hint">Tap to expand</span>
-            <span class="chev"></span>
+            <span class="chev" aria-hidden="true"></span>
           </span>
         </summary>
 
         <div class="card-list">
-          <div class="card" onclick="location.href='transformer_image.html'">
+          <a class="card" href="transformer_image.html">
             <h3>Transformer Image</h3>
             <p>Reference image</p>
-          </div>
+          </a>
 
-          <div class="card" onclick="location.href='supporting_documents.html'">
+          <a class="card" href="supporting_documents.html">
             <h3>Supporting Documents</h3>
             <p>Additional reference material</p>
-          </div>
+          </a>
 
-          <div class="card" onclick="location.href='phenolic_display.html'">
+          <a class="card" href="phenolic_display.html">
             <h3>Phenolic Display</h3>
             <p>Phenolic layout reference</p>
-          </div>
+          </a>
 
-          <div class="card" onclick="location.href='submit.html?form=fpv'">
+          <a class="card" href="submit.html?form=fpv">
             <h3>Finished Product Verification Photo</h3>
             <p>Capture final verification image</p>
-          </div>
+          </a>
         </div>
       </details>
     </div>
 
-    <div class="footer">© NEXUS Data Science Quality Systems Division</div>
+    <div class="footer">© NEXUS Quality System</div>
   </div>
+
+  <!-- EQUIPMENT ID + LINK PROPAGATION -->
+  <script>
+    (function () {
+      const qs = new URLSearchParams(location.search);
+      let eq = (qs.get("eq") || "").trim();
+
+      // Fallback: remember last equipment if someone navigates without ?eq=
+      if (!eq) eq = (localStorage.getItem("nx_eq") || "").trim();
+      if (eq) localStorage.setItem("nx_eq", eq);
+
+      // Update visible equipment label
+      const el = document.getElementById("eqId");
+      if (el) el.textContent = eq || "MISSING";
+
+      // Title
+      document.title = eq ? `Equipment: ${eq}` : "NEXUS – Equipment";
+
+      // Propagate eq to all same-site links on this page
+      if (eq) {
+        document.querySelectorAll('a[href]').forEach(a => {
+          try {
+            const href = a.getAttribute("href");
+            if (!href || href.startsWith("#") || href.startsWith("javascript:")) return;
+
+            const u = new URL(href, location.href);
+
+            // only patch same-origin links
+            if (u.origin !== location.origin) return;
+
+            u.searchParams.set("eq", eq);
+            a.setAttribute("href", u.pathname + "?" + u.searchParams.toString());
+          } catch (e) {}
+        });
+      }
+    })();
+  </script>
 
 </body>
 </html>
