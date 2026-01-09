@@ -1,82 +1,207 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Equipment</title>
+  <meta charset="UTF-8" />
+  <title>NEXUS – Equipment</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-<style>
-  :root{
-    --bg:#b60000;
-    --panel:rgba(255,255,255,0.25);
-    --btn-bg:#ffffffdd;
-    --btn-color:#000;
-    --btn-hover-bg:#fff;
-    --btn-hover-color:#b60000;
-  }
-  html,body{ margin:0; font-family:Arial,Helvetica,sans-serif; color:#fff; background:var(--bg); }
-  .page-wrap{ min-height:100vh; display:flex; align-items:center; justify-content:center; padding:40px; }
-  main.container{
-    width:100%; max-width:960px; background:var(--panel); padding:28px; border-radius:18px;
-    backdrop-filter: blur(6px); text-align:center;
-  }
-  h1{ margin:0 0 8px; font-size:34px; }
-  .eq{ font-size:20px; font-weight:900; margin:0 0 18px; }
-  .grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:16px; }
-  .btn{
-    width:100%; height:60px; background:var(--btn-bg); color:var(--btn-color);
-    border:2px solid #ff0000; border-radius:12px; font-size:15px; font-weight:700;
-    cursor:pointer; display:inline-flex; justify-content:center; align-items:center;
-    text-decoration:none; transition:0.2s; box-shadow:0 0 12px #ff0000;
-  }
-  .btn:hover{ background:var(--btn-hover-bg); color:var(--btn-hover-color); transform:translateY(-2px); }
-</style>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f4f6f8;
+      color: #222;
+    }
+
+    /* ===== NEXUS HEADER ===== */
+    .nexus-header {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 16px 0;
+      background: #ffffff;
+      border-bottom: 1px solid #dcdcdc;
+    }
+
+    .nexus-logo {
+      max-height: 60px;
+      width: auto;
+    }
+
+    /* ===== HERO ===== */
+    .hero {
+      background: url("assets/transformer.jpg") center / cover no-repeat;
+      padding: 40px 16px;
+      color: #ffffff;
+      text-align: center;
+    }
+
+    .hero h1 {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 700;
+    }
+
+    .hero p {
+      margin-top: 6px;
+      font-size: 16px;
+      opacity: 0.9;
+    }
+
+    /* ===== CONTENT ===== */
+    .container {
+      max-width: 900px;
+      margin: 24px auto;
+      padding: 0 16px;
+    }
+
+    .section {
+      background: #ffffff;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+
+    .section-header {
+      padding: 14px 18px;
+      font-size: 18px;
+      font-weight: 700;
+      background: #f0f2f5;
+      border-bottom: 1px solid #dcdcdc;
+    }
+
+    .card-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 16px;
+      padding: 18px;
+    }
+
+    .card {
+      background: #ffffff;
+      border: 1px solid #dcdcdc;
+      border-radius: 8px;
+      padding: 16px;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+    }
+
+    .card h3 {
+      margin: 0 0 6px 0;
+      font-size: 16px;
+      color: #0a58ca;
+    }
+
+    .card p {
+      margin: 0;
+      font-size: 14px;
+      color: #555;
+    }
+
+    /* ===== FOOTER ===== */
+    .footer {
+      text-align: center;
+      font-size: 12px;
+      color: #777;
+      margin: 32px 0 16px;
+    }
+  </style>
 </head>
 
 <body>
-<div class="page-wrap">
-<main class="container">
 
-  <h1>Equipment Page</h1>
-  <div class="eq" id="eqLabel"></div>
+  <!-- ===== NEXUS LOGO ===== -->
+  <header class="nexus-header">
+    <img src="assets/nexus_logo.png" alt="NEXUS Logo" class="nexus-logo">
+  </header>
 
-  <div class="grid">
-    <a class="btn" id="rifBtn" href="#">RIF</a>
-    <a class="btn" id="lvtBtn" href="#">Megohmmeter Testing</a>
-    <a class="btn" id="torqueBtn" href="#">Torque</a>
-    <a class="btn" id="l2Btn" href="#">L2-IVF</a>
-    <a class="btn" id="prefodBtn" href="#">Pre-FOD</a>
-    <a class="btn" id="phenolicBtn" href="#">Phenolic Display</a>
-    <a class="btn" id="transformerBtn" href="#">Transformer Image</a>
-    <a class="btn" id="finishedPhotoBtn" href="#">Finished Product Verification Photo</a>
-    <a class="btn" id="supportingBtn" href="#">Supporting Documents</a>
-    <a class="btn" id="constructionBtn" href="#">Construction Check Sheet</a>
+  <!-- ===== HERO ===== -->
+  <div class="hero">
+    <h1>Equipment: TR-001</h1>
+    <p>NEXUS Quality & Verification System</p>
   </div>
 
-</main>
-</div>
+  <!-- ===== CONTENT ===== -->
+  <div class="container">
 
-<script>
-  const qs = new URLSearchParams(location.search);
-  const eq = qs.get("eq") || "";
-  document.title = eq ? `Equipment ${eq}` : "Equipment";
-  document.getElementById("eqLabel").textContent = eq ? `Equipment: ${eq}` : "Missing equipment ID (eq)";
+    <!-- TASKS -->
+    <div class="section">
+      <div class="section-header">Tasks to Complete</div>
+      <div class="card-list">
 
-  function link(id){
-    return `task.html?id=${encodeURIComponent(id)}${eq ? `&eq=${encodeURIComponent(eq)}` : ""}`;
-  }
+        <div class="card" onclick="location.href='submit.html?form=rif'">
+          <h3>RIF</h3>
+          <p>Receiving Inspection Form</p>
+        </div>
 
-  document.getElementById("rifBtn").href = link("rif");
-  document.getElementById("lvtBtn").href = link("meg");
-  document.getElementById("torqueBtn").href = link("torque");
-  document.getElementById("l2Btn").href = link("l2");
-  document.getElementById("prefodBtn").href = link("prefod");
-  document.getElementById("phenolicBtn").href = link("phenolic");
-  document.getElementById("transformerBtn").href = link("transformer");
-  document.getElementById("finishedPhotoBtn").href = link("fpv_photo");
-  document.getElementById("supportingBtn").href = link("supporting");
-  document.getElementById("constructionBtn").href = link("construction");
-</script>
+        <div class="card" onclick="location.href='equipment_meg.html'">
+          <h3>Megohmmeter Testing</h3>
+          <p>Megger testing of conductors</p>
+        </div>
+
+        <div class="card" onclick="location.href='submit.html?form=torque'">
+          <h3>Torque</h3>
+          <p>Torque verification</p>
+        </div>
+
+        <div class="card" onclick="location.href='submit.html?form=l2ivf'">
+          <h3>L2-IVF</h3>
+          <p>Level 2 in-process verification</p>
+        </div>
+
+        <div class="card" onclick="location.href='submit.html?form=prefod'">
+          <h3>Pre-FOD</h3>
+          <p>Foreign object damage check</p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- SUPPORTING DOCS -->
+    <div class="section">
+      <div class="section-header">Supporting Documents</div>
+      <div class="card-list">
+
+        <div class="card" onclick="location.href='transformer_image.html'">
+          <h3>Transformer Image</h3>
+          <p>Reference image</p>
+        </div>
+
+        <div class="card" onclick="location.href='supporting_documents.html'">
+          <h3>Supporting Documents</h3>
+          <p>Additional reference material</p>
+        </div>
+
+        <div class="card" onclick="location.href='construction_check.html'">
+          <h3>Construction Check Sheet</h3>
+          <p>Assembly verification</p>
+        </div>
+
+        <div class="card" onclick="location.href='phenolic_display.html'">
+          <h3>Phenolic Display</h3>
+          <p>Phenolic layout reference</p>
+        </div>
+
+        <div class="card" onclick="location.href='submit.html?form=fpv'">
+          <h3>Finished Product Verification Photo</h3>
+          <p>Capture final verification image</p>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===== FOOTER ===== -->
+  <div class="footer">
+    © NEXUS Quality System
+  </div>
+
 </body>
 </html>
-
