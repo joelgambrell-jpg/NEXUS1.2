@@ -96,6 +96,14 @@
       transition: transform 0.15s ease, box-shadow 0.15s ease;
     }
 
+    /* IMPORTANT FIX: make <a class="card"> fully clickable */
+    a.card{
+      display: block;
+      text-decoration: none;
+      color: inherit;
+      -webkit-tap-highlight-color: transparent;
+    }
+
     .card:hover {
       transform: translateY(-3px);
       box-shadow: 0 6px 14px rgba(0,0,0,0.2);
