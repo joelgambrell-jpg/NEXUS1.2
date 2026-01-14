@@ -1,3 +1,6 @@
+<!-- =========================
+     index.html
+     ========================= -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -79,6 +82,14 @@
     }
     .btn:disabled{ opacity:0.6; cursor:not-allowed; }
 
+    /* Landing indicator (neon green) */
+    .btn.complete{
+      background:#00ff66 !important;
+      color:#002b14 !important;
+      border-color:#00ff66 !important;
+      box-shadow:0 0 14px rgba(0,255,102,.85);
+    }
+
     .chip{
       display:inline-flex;
       align-items:center;
@@ -94,32 +105,32 @@
 
     footer{ margin-top:14px; font-size:0.9em; opacity:0.85; text-align:center; }
     code{ background:rgba(0,0,0,0.35); padding:2px 6px; border-radius:6px; }
-  
-/* ===== NEXUS Shared Header ===== */
-.nx-header-wrap{
-  background: rgba(0,0,0,0.35);
-  border-bottom: 1px solid rgba(255,255,255,0.18);
-  backdrop-filter: blur(8px);
-}
-.nx-header{
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 14px 18px;
-  display: flex;
-  align-items: center;
-}
-.nx-header img{
-  height: 54px;
-  width: auto;
-  max-width: 100%;
-  object-fit: contain;
-}
 
-</style>
+    /* ===== NEXUS Shared Header ===== */
+    .nx-header-wrap{
+      background: rgba(0,0,0,0.35);
+      border-bottom: 1px solid rgba(255,255,255,0.18);
+      backdrop-filter: blur(8px);
+    }
+    .nx-header{
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+    }
+    .nx-header img{
+      height: 54px;
+      width: auto;
+      max-width: 100%;
+      object-fit: contain;
+    }
+  </style>
 </head>
 
 <body>
 <div class="nx-header-wrap"><div class="nx-header"><img src="nexus.png" alt="NEXUS" /></div></div>
+
   <div class="wrap">
     <div class="card">
       <header>
@@ -140,6 +151,7 @@
           <div class="actions">
             <button class="btn" id="openBtn" type="button">Open Equipment Page</button>
             <a class="btn secondary" id="qrBtn" href="qr.html">Generate QR</a>
+            <a class="btn secondary" id="stepsStatusBtn" href="#">Equipment Steps</a>
           </div>
 
           <div class="hint">
@@ -175,8 +187,11 @@
     const eqInput = document.getElementById('eqInput');
     const openBtn = document.getElementById('openBtn');
     const qrBtn = document.getElementById('qrBtn');
+    const stepsStatusBtn = document.getElementById('stepsStatusBtn');
 
     function setChip(text){ chip.textContent = text; }
+    function normalizeEq(s){ return (s || '').trim(); }
+    function landingKey(eq){ return `nexus_${eq}_landing_complete`; }
 
     // If someone hits /?eq=TR-001, send them straight to the equipment page.
     (function autoRedirect(){
@@ -187,17 +202,25 @@
       }
     })();
 
-    function normalizeEq(s){
-      return (s || '').trim();
-    }
-
     function updateLinks(){
       const eq = normalizeEq(eqInput.value);
       qrBtn.href = `qr.html${eq ? `?eq=${encodeURIComponent(eq)}` : ''}`;
+      stepsStatusBtn.href = `equipment.html${eq ? `?eq=${encodeURIComponent(eq)}` : ''}`;
     }
 
-    eqInput.addEventListener('input', updateLinks);
+    function updateStepIndicator(){
+      const eq = normalizeEq(eqInput.value);
+      const done = !!eq && localStorage.getItem(landingKey(eq)) === '1';
+      stepsStatusBtn.classList.toggle('complete', done);
+    }
+
+    eqInput.addEventListener('input', () => {
+      updateLinks();
+      updateStepIndicator();
+    });
+
     updateLinks();
+    updateStepIndicator();
 
     openBtn.addEventListener('click', () => {
       const eq = normalizeEq(eqInput.value);
@@ -209,10 +232,14 @@
       location.href = `equipment.html?eq=${encodeURIComponent(eq)}`;
     });
 
-    // Press Enter in the equipment field
     eqInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') openBtn.click();
     });
+
+    // If another tab updates completion, reflect it
+    window.addEventListener('storage', () => updateStepIndicator());
+    window.addEventListener('focus', () => updateStepIndicator());
+    window.addEventListener('pageshow', () => updateStepIndicator());
   </script>
 </body>
 </html>
