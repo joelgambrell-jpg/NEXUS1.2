@@ -1,250 +1,89 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Task</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Redirecting…</title>
 
-<style>
-  :root{
-    --bg:#b60000;
-    --panel:rgba(255,255,255,0.22);
-    --panel2:rgba(0,0,0,0.25);
-    --accent:#00c2ff;
-  }
-  html,body{ margin:0; font-family:Arial,Helvetica,sans-serif; color:#fff; background:var(--bg); }
-  body{
-    background-image:url("transformer.jpg");
-    background-repeat:no-repeat;
-    background-position:center center;
-    background-size:cover;
-    background-attachment:fixed;
-  }
-  .wrap{ min-height:100vh; display:flex; align-items:center; justify-content:center; padding:34px; }
-  .card{
-    width:100%; max-width:900px;
-    background:var(--panel);
-    border:1px solid rgba(255,255,255,0.20);
-    border-radius:18px;
-    padding:24px;
-    backdrop-filter:blur(10px);
-  }
-  h1{ margin:0 0 10px; font-size:28px; font-weight:900; }
-  .meta{ font-weight:900; opacity:0.95; margin:0 0 14px; }
-  .panel{
-    background:var(--panel2);
-    border:1px solid rgba(255,255,255,0.20);
-    border-radius:16px;
-    padding:16px;
-    margin-top:14px;
-  }
-  .actions{ display:flex; flex-wrap:wrap; gap:10px; margin-top:14px; }
-  .btn{
-    padding:12px 16px;
-    font-size:14px;
-    font-weight:900;
-    border-radius:999px;
-    border:2px solid var(--accent);
-    cursor:pointer;
-    text-decoration:none;
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    user-select:none;
-    background:rgba(10,15,36,0.95);
-    color:#3ecbff;
-    transition:all .18s ease;
-  }
-  .btn.secondary{
-    background:rgba(0,0,0,0.22);
-    border-color:rgba(255,255,255,0.35);
-    color:#fff;
-  }
-  .btn.complete{
-    background:#00ff66 !important;
-    color:#002b14 !important;
-    border-color:#00ff66 !important;
-    box-shadow:0 0 14px rgba(0,255,102,.85);
-  }
-  .note{ margin-top:10px; font-size:13px; opacity:0.92; line-height:1.35; }
+  <!-- Immediate redirect stays intact -->
+  <meta http-equiv="refresh" content="0; url=form.html" />
 
-  /* optional: hide all task sections until JS selects one */
-  [data-task]{ display:none; }
-  [data-task].active{ display:block; }
-</style>
+  <style>
+    body{ margin:0; font-family:Arial,Helvetica,sans-serif; background:#b60000; color:#fff; }
+    .wrap{ min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px; text-align:center; }
+    a{ color:#fff; font-weight:900; }
+
+    /* ===== NEXUS Shared Header ===== */
+    .nx-header-wrap{
+      background: rgba(0,0,0,0.35);
+      border-bottom: 1px solid rgba(255,255,255,0.18);
+      backdrop-filter: blur(8px);
+    }
+    .nx-header{
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+    }
+    .nx-header img{
+      height: 54px;
+      width: auto;
+      max-width: 100%;
+      object-fit: contain;
+    }
+  </style>
 </head>
 
 <body>
+<div class="nx-header-wrap">
+  <div class="nx-header">
+    <img src="nexus.png" alt="NEXUS" />
+  </div>
+</div>
+
 <div class="wrap">
-  <div class="card">
-    <h1 id="taskTitle">Task</h1>
-    <div class="meta" id="taskMeta"></div>
-
-    <!-- Your information sections live here -->
-    <div class="panel" id="taskSections">
-
-      <!-- EXAMPLES: replace/expand with your real sections (forms/info/etc) -->
-      <section data-task="meg">
-        <div style="font-weight:900; margin-bottom:10px;">Megohmmeter Testing / Megger Reporting</div>
-        <div style="opacity:.95; line-height:1.35;">
-          <!-- Put your original Megger info/UI here -->
-          Add your existing megger reporting inputs, instructions, upload controls, etc.
-        </div>
-      </section>
-
-      <section data-task="torque">
-        <div style="font-weight:900; margin-bottom:10px;">Torque</div>
-        <div style="opacity:.95; line-height:1.35;">
-          <!-- Put your original Torque info/UI here -->
-          Add your existing torque instructions, values, verification fields, etc.
-        </div>
-      </section>
-
-      <section data-task="rif">
-        <div style="font-weight:900; margin-bottom:10px;">RIF</div>
-        <div style="opacity:.95; line-height:1.35;">
-          <!-- Put your original RIF info/UI here -->
-          Add your existing RIF content here.
-        </div>
-      </section>
-
-      <section data-task="l2">
-        <div style="font-weight:900; margin-bottom:10px;">L2-IVF</div>
-        <div style="opacity:.95; line-height:1.35;">
-          Add your existing L2-IVF content here.
-        </div>
-      </section>
-
-      <section data-task="prefod">
-        <div style="font-weight:900; margin-bottom:10px;">Pre-FOD</div>
-        <div style="opacity:.95; line-height:1.35;">
-          Add your existing Pre-FOD content here.
-        </div>
-      </section>
-
-      <section data-task="phenolic">
-        <div style="font-weight:900; margin-bottom:10px;">Phenolic Display</div>
-        <div style="opacity:.95; line-height:1.35;">
-          Add your existing Phenolic content here.
-        </div>
-      </section>
-
-      <section data-task="transformer">
-        <div style="font-weight:900; margin-bottom:10px;">Transformer Image</div>
-        <div style="opacity:.95; line-height:1.35;">
-          Add your existing Transformer Image content here.
-        </div>
-      </section>
-
-      <section data-task="fpv_photo">
-        <div style="font-weight:900; margin-bottom:10px;">Finished Product Verification Photo</div>
-        <div style="opacity:.95; line-height:1.35;">
-          Add your existing FPV Photo content here.
-        </div>
-      </section>
-
-      <section data-task="supporting">
-        <div style="font-weight:900; margin-bottom:10px;">Supporting Documents</div>
-        <div style="opacity:.95; line-height:1.35;">
-          Add your existing Supporting Docs content here.
-        </div>
-      </section>
-
-      <section data-task="construction">
-        <div style="font-weight:900; margin-bottom:10px;">Construction Check Sheet</div>
-        <div style="opacity:.95; line-height:1.35;">
-          Add your existing Construction content here.
-        </div>
-      </section>
-
+  <div>
+    <div style="font-weight:900;font-size:18px;">Redirecting to the unified form…</div>
+    <div style="opacity:0.9;margin-top:10px;">
+      If you are not redirected,
+      <a id="fallback" href="form.html">click here</a>.
     </div>
-
-    <div class="actions">
-      <button class="btn" id="completeBtn" type="button">STEP COMPLETE</button>
-      <button class="btn secondary" id="undoBtn" type="button">UNDO COMPLETE</button>
-      <a class="btn secondary" id="backBtn" href="#">Back to Equipment</a>
-    </div>
-
-    <div class="note" id="note"></div>
   </div>
 </div>
 
 <script>
-(function(){
+  /* -------------------------------
+     ORIGINAL REDIRECT LOGIC
+     ------------------------------- */
   const qs = new URLSearchParams(location.search);
-  const eq = (qs.get("eq") || "").trim() || "NO_EQ";
-  const id = (qs.get("id") || "").trim();
+  const id = (qs.get('id') || qs.get('form') || '').trim();
+  const eq = (qs.get('eq') || '').trim();
 
-  const taskTitle = document.getElementById("taskTitle");
-  const taskMeta  = document.getElementById("taskMeta");
-  const completeBtn = document.getElementById("completeBtn");
-  const undoBtn = document.getElementById("undoBtn");
-  const backBtn = document.getElementById("backBtn");
-  const note = document.getElementById("note");
+  const u = new URL('form.html', location.href);
+  if (id) u.searchParams.set('id', id);
+  if (eq) u.searchParams.set('eq', eq);
 
-  function stepKey(stepId){ return `nexus_${eq}_step_${stepId}`; }
-  function landingKey(){ return `nexus_${eq}_landing_complete`; }
+  document.getElementById('fallback').href =
+    u.pathname.split('/').pop() + u.search;
 
-  const labels = {
-    rif: "RIF",
-    meg: "Megohmmeter Testing / Megger Reporting",
-    torque: "Torque",
-    l2: "L2-IVF",
-    prefod: "Pre-FOD",
-    phenolic: "Phenolic Display",
-    transformer: "Transformer Image",
-    fpv_photo: "Finished Product Verification Photo",
-    supporting: "Supporting Documents",
-    construction: "Construction Check Sheet"
-  };
+  /* -------------------------------
+     STEP COMPLETE TRACKING
+     ------------------------------- */
+  if (id && eq) {
+    const stepKey = `nexus_${eq}_step_${id}`;
+    const landingKey = `nexus_${eq}_landing_complete`;
 
-  const name = labels[id] || (id ? id.toUpperCase() : "Task");
-
-  document.title = `${name}${eq !== "NO_EQ" ? ` - ${eq}` : ""}`;
-  taskTitle.textContent = name;
-  taskMeta.textContent = `Equipment: ${eq}${id ? ` • Step: ${id}` : ""}`;
-  backBtn.href = `equipment.html${eq !== "NO_EQ" ? `?eq=${encodeURIComponent(eq)}` : ""}`;
-
-  // Show only the matching information section (does NOT overwrite your HTML)
-  const sections = Array.from(document.querySelectorAll('[data-task]'));
-  sections.forEach(s => s.classList.remove('active'));
-  const active = document.querySelector(`[data-task="${CSS.escape(id)}"]`);
-  if (active) active.classList.add('active');
-
-  if (!id){
-    note.textContent = "Missing task id. Open this page from equipment.html.";
-    completeBtn.disabled = true;
-    undoBtn.disabled = true;
-    return;
+    // Expose helpers for form.html to call when submit is successful
+    window.NEXUS = window.NEXUS || {};
+    window.NEXUS.markStepComplete = function () {
+      localStorage.setItem(stepKey, '1');
+      localStorage.setItem(landingKey, '1');
+    };
   }
 
-  function applyUI(){
-    const done = localStorage.getItem(stepKey(id)) === "1";
-    completeBtn.classList.toggle("complete", done);
-    note.textContent = done
-      ? "Marked complete. Return to Equipment to see the step button turn neon green."
-      : "Not complete yet. Press STEP COMPLETE when finished.";
-  }
-
-  function refreshLandingFlag(){
-    // Ensure landing flag reflects "any complete"
-    // (equipment.html recomputes this accurately; we set to 1 on completion for fast feedback)
-    localStorage.setItem(landingKey(), "1");
-  }
-
-  completeBtn.addEventListener("click", () => {
-    localStorage.setItem(stepKey(id), "1");
-    refreshLandingFlag();
-    applyUI();
-  });
-
-  undoBtn.addEventListener("click", () => {
-    localStorage.removeItem(stepKey(id));
-    applyUI();
-  });
-
-  applyUI();
-})();
+  /* Perform redirect */
+  location.replace(document.getElementById('fallback').href);
 </script>
 </body>
 </html>
