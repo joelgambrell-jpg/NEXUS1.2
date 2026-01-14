@@ -1,7 +1,7 @@
 (function () {
   const params = new URLSearchParams(location.search);
-  const id = params.get("id");
-  const eq = (params.get("eq") || "").trim(); // ✅ equipment id from URL
+  const id = (params.get("id") || "").trim();
+  const eq = (params.get("eq") || "").trim(); // equipment id from URL
 
   if (!id || !window.FORMS || !window.FORMS[id]) {
     document.body.innerHTML =
@@ -18,7 +18,7 @@
   document.getElementById("page-title").textContent = cfg.title || "";
   document.getElementById("section-title").textContent = cfg.sectionTitle || "";
 
-  // ✅ show equipment label (if element exists in form.html)
+  // show equipment label (if element exists in form.html)
   const eqLabel = document.getElementById("eqLabel");
   if (eqLabel) eqLabel.textContent = eq ? `Equipment: ${eq}` : "";
 
@@ -30,9 +30,53 @@
   const buttonsEl = document.getElementById("buttons");
   const mediaEl = document.getElementById("media");
 
+  // -------------------------
+  // STEP COMPLETE KEYS (matches equipment.html)
+  // -------------------------
+  function stepKey(stepId){ return `nexus_${eq || "NO_EQ"}_step_${stepId}`; }
+  function landingKey(){ return `nexus_${eq || "NO_EQ"}_landing_complete`; }
+
+  // Keep your existing completion key support + add nexus tracking
   function markDone() {
+    // Original behavior
     if (cfg.completedKey) localStorage.setItem(cfg.completedKey, "true");
+
+    // New behavior (only when eq + id exist)
+    if (eq && id){
+      localStorage.setItem(stepKey(id), "1");
+      localStorage.setItem(landingKey(), "1");
+    }
+
+    // If you added a STEP COMPLETE button in form.html, turn it green
+    const stepBtn = document.getElementById("stepCompleteBtn");
+    if (stepBtn) stepBtn.classList.add("complete");
   }
+
+  // OPTIONAL: wire a STEP COMPLETE button if present in form.html
+  (function wireStepCompleteButton(){
+    const stepBtn = document.getElementById("stepCompleteBtn");
+    if (!stepBtn) return;
+
+    // Only show if usable
+    stepBtn.style.display = (eq && id) ? "block" : "none";
+
+    // Initialize state
+    if (eq && id && localStorage.getItem(stepKey(id)) === "1"){
+      stepBtn.classList.add("complete");
+    }
+
+    stepBtn.addEventListener("click", () => {
+      // toggle behavior
+      if (!eq || !id) return;
+      const done = localStorage.getItem(stepKey(id)) === "1";
+      if (done){
+        localStorage.removeItem(stepKey(id));
+        stepBtn.classList.remove("complete");
+      }else{
+        markDone();
+      }
+    });
+  })();
 
   // =========================
   // Helper: add eq to INTERNAL links only
@@ -68,7 +112,7 @@
     buttonsWrap.style.display = "none";
     mediaEl.style.display = "block";
     mediaEl.innerHTML = `<iframe class="embed" src="${cfg.embedUrl}" title="${cfg.title || ""}"></iframe>`;
-    markDone();
+    markDone(); // keep your behavior: entering embed marks complete
     return;
   }
 
@@ -82,7 +126,7 @@
         <a class="btn" href="${cfg.imageUrl}" target="_blank" rel="noopener noreferrer">Open Image in New Tab</a>
       </div>
     `;
-    markDone();
+    markDone(); // keep your behavior: opening image step marks complete
 
     if (cfg.magnifier) {
       const img = document.getElementById("mainImg");
@@ -177,7 +221,6 @@
       closeBtn.addEventListener("click", closeModal);
       homeBtn.addEventListener("click", () => {
         closeModal();
-        // Keep eq when going home (optional)
         window.location.href = eq ? `index.html?eq=${encodeURIComponent(eq)}` : "index.html";
       });
 
@@ -199,7 +242,7 @@
     a.textContent = b.text || "Open";
     a.href = b.href || "#";
 
-    // ✅ Always carry eq on internal links
+    // Always carry eq on internal links
     a.href = withEq(a.href);
 
     // External links open new tab (internal links stay same tab)
@@ -208,6 +251,7 @@
       a.rel = "noopener noreferrer";
     }
 
+    // Mark done when user clicks a button
     a.addEventListener("click", markDone);
     buttonsEl.appendChild(a);
   });
