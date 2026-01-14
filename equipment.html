@@ -1,3 +1,7 @@
+<!-- =========================
+     equipment.html
+     (Buttons turn neon green once the step is completed on task.html)
+     ========================= -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -30,6 +34,14 @@
     text-decoration:none; transition:0.2s; box-shadow:0 0 12px #ff0000;
   }
   .btn:hover{ background:var(--btn-hover-bg); color:var(--btn-hover-color); transform:translateY(-2px); }
+
+  /* Completed step state (neon green) */
+  .btn.complete{
+    background:#00ff66 !important;
+    color:#002b14 !important;
+    border-color:#00ff66 !important;
+    box-shadow:0 0 14px rgba(0,255,102,.85) !important;
+  }
 </style>
 </head>
 
@@ -58,7 +70,8 @@
 
 <script>
   const qs = new URLSearchParams(location.search);
-  const eq = qs.get("eq") || "";
+  const eq = (qs.get("eq") || "").trim();
+
   document.title = eq ? `Equipment ${eq}` : "Equipment";
   document.getElementById("eqLabel").textContent = eq ? `Equipment: ${eq}` : "Missing equipment ID (eq)";
 
@@ -66,17 +79,58 @@
     return `task.html?id=${encodeURIComponent(id)}${eq ? `&eq=${encodeURIComponent(eq)}` : ""}`;
   }
 
-  document.getElementById("rifBtn").href = link("rif");
-  document.getElementById("lvtBtn").href = link("meg");
-  document.getElementById("torqueBtn").href = link("torque");
-  document.getElementById("l2Btn").href = link("l2");
-  document.getElementById("prefodBtn").href = link("prefod");
-  document.getElementById("phenolicBtn").href = link("phenolic");
-  document.getElementById("transformerBtn").href = link("transformer");
-  document.getElementById("finishedPhotoBtn").href = link("fpv_photo");
-  document.getElementById("supportingBtn").href = link("supporting");
-  document.getElementById("constructionBtn").href = link("construction");
+  const steps = [
+    { btnId: "rifBtn",           stepId: "rif" },
+    { btnId: "lvtBtn",           stepId: "meg" },
+    { btnId: "torqueBtn",        stepId: "torque" },
+    { btnId: "l2Btn",            stepId: "l2" },
+    { btnId: "prefodBtn",        stepId: "prefod" },
+    { btnId: "phenolicBtn",      stepId: "phenolic" },
+    { btnId: "transformerBtn",   stepId: "transformer" },
+    { btnId: "finishedPhotoBtn", stepId: "fpv_photo" },
+    { btnId: "supportingBtn",    stepId: "supporting" },
+    { btnId: "constructionBtn",  stepId: "construction" },
+  ];
+
+  // Set all button hrefs
+  steps.forEach(({btnId, stepId}) => {
+    const el = document.getElementById(btnId);
+    if (el) el.href = link(stepId);
+  });
+
+  function stepKey(stepId){
+    return `nexus_${eq || "NO_EQ"}_step_${stepId}`;
+  }
+  function landingKey(){
+    return `nexus_${eq || "NO_EQ"}_landing_complete`;
+  }
+
+  function refreshCompletionUI(){
+    let anyComplete = false;
+
+    steps.forEach(({btnId, stepId}) => {
+      const el = document.getElementById(btnId);
+      if (!el) return;
+
+      const done = localStorage.getItem(stepKey(stepId)) === "1";
+      el.classList.toggle("complete", done);
+      if (done) anyComplete = true;
+    });
+
+    localStorage.setItem(landingKey(), anyComplete ? "1" : "0");
+  }
+
+  refreshCompletionUI();
+  window.addEventListener("focus", refreshCompletionUI);
+  window.addEventListener("pageshow", refreshCompletionUI);
+
+  window.addEventListener("storage", (e) => {
+    if (!e.key) return;
+    const prefix = `nexus_${eq || "NO_EQ"}_step_`;
+    if (e.key.startsWith(prefix) || e.key === landingKey()){
+      refreshCompletionUI();
+    }
+  });
 </script>
 </body>
 </html>
-
