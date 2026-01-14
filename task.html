@@ -1,55 +1,201 @@
+<!-- =========================
+     task.html
+     (Shows the task + STEP COMPLETE button; marks completion in localStorage)
+     ========================= -->
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Redirecting…</title>
-  <meta http-equiv="refresh" content="0; url=form.html" />
-  <style>
-    body{ margin:0; font-family:Arial,Helvetica,sans-serif; background:#b60000; color:#fff; }
-    .wrap{ min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px; text-align:center; }
-    a{ color:#fff; font-weight:900; }
-  
-/* ===== NEXUS Shared Header ===== */
-.nx-header-wrap{
-  background: rgba(0,0,0,0.35);
-  border-bottom: 1px solid rgba(255,255,255,0.18);
-  backdrop-filter: blur(8px);
-}
-.nx-header{
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 14px 18px;
-  display: flex;
-  align-items: center;
-}
-.nx-header img{
-  height: 54px;
-  width: auto;
-  max-width: 100%;
-  object-fit: contain;
-}
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Task</title>
 
+<style>
+  :root{
+    --bg:#b60000;
+    --panel:rgba(255,255,255,0.22);
+    --panel2:rgba(0,0,0,0.25);
+    --accent:#00c2ff;
+  }
+  html,body{ margin:0; font-family:Arial,Helvetica,sans-serif; color:#fff; background:var(--bg); }
+  body{
+    background-image:url("transformer.jpg");
+    background-repeat:no-repeat;
+    background-position:center center;
+    background-size:cover;
+    background-attachment:fixed;
+  }
+  .wrap{ min-height:100vh; display:flex; align-items:center; justify-content:center; padding:34px; }
+  .card{
+    width:100%; max-width:900px;
+    background:var(--panel);
+    border:1px solid rgba(255,255,255,0.20);
+    border-radius:18px;
+    padding:24px;
+    backdrop-filter:blur(10px);
+  }
+  h1{ margin:0 0 10px; font-size:28px; font-weight:900; }
+  .meta{ font-weight:900; opacity:0.95; margin:0 0 14px; }
+  .panel{
+    background:var(--panel2);
+    border:1px solid rgba(255,255,255,0.20);
+    border-radius:16px;
+    padding:16px;
+    margin-top:14px;
+  }
+  .actions{ display:flex; flex-wrap:wrap; gap:10px; margin-top:14px; }
+  .btn{
+    padding:12px 16px;
+    font-size:14px;
+    font-weight:900;
+    border-radius:999px;
+    border:2px solid var(--accent);
+    cursor:pointer;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    user-select:none;
+    background:rgba(10,15,36,0.95);
+    color:#3ecbff;
+    transition:all .18s ease;
+  }
+  .btn.secondary{
+    background:rgba(0,0,0,0.22);
+    border-color:rgba(255,255,255,0.35);
+    color:#fff;
+  }
+  .btn.complete{
+    background:#00ff66 !important;
+    color:#002b14 !important;
+    border-color:#00ff66 !important;
+    box-shadow:0 0 14px rgba(0,255,102,.85);
+  }
+  .note{ margin-top:10px; font-size:13px; opacity:0.92; line-height:1.35; }
 </style>
 </head>
-<body>
-<div class="nx-header-wrap"><div class="nx-header"><img src="nexus.png" alt="NEXUS" /></div></div>
-  <div class="wrap">
-    <div>
-      <div style="font-weight:900;font-size:18px;">Redirecting to the unified form…</div>
-      <div style="opacity:0.9;margin-top:10px;">If you are not redirected, <a id="fallback" href="form.html">click here</a>.</div>
-    </div>
-  </div>
 
-  <script>
-    const qs = new URLSearchParams(location.search);
-    const id = (qs.get('id') || qs.get('form') || '').trim();
-    const eq = (qs.get('eq') || '').trim();
-    const u = new URL('form.html', location.href);
-    if (id) u.searchParams.set('id', id);
-    if (eq) u.searchParams.set('eq', eq);
-    document.getElementById('fallback').href = u.pathname.split('/').pop() + u.search;
-    location.replace(document.getElementById('fallback').href);
-  </script>
+<body>
+<div class="wrap">
+  <div class="card">
+    <h1 id="taskTitle">Task</h1>
+    <div class="meta" id="taskMeta"></div>
+
+    <div class="panel" id="taskBody">
+      Task content goes here.
+    </div>
+
+    <div class="actions">
+      <button class="btn" id="completeBtn" type="button">STEP COMPLETE</button>
+      <button class="btn secondary" id="undoBtn" type="button">UNDO COMPLETE</button>
+      <a class="btn secondary" id="backBtn" href="#">Back to Equipment</a>
+    </div>
+
+    <div class="note" id="note"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const qs = new URLSearchParams(location.search);
+  const eq = (qs.get("eq") || "").trim() || "NO_EQ";
+  const id = (qs.get("id") || "").trim();
+
+  const taskTitle = document.getElementById("taskTitle");
+  const taskMeta  = document.getElementById("taskMeta");
+  const taskBody  = document.getElementById("taskBody");
+  const completeBtn = document.getElementById("completeBtn");
+  const undoBtn = document.getElementById("undoBtn");
+  const backBtn = document.getElementById("backBtn");
+  const note = document.getElementById("note");
+
+  // Configure which steps truly have a "completion function".
+  // Remove from this denylist if you want ALL tasks to be completable.
+  const NON_COMPLETABLE = new Set([
+    // examples (edit as needed):
+    // "transformer",
+    // "supporting"
+  ]);
+
+  function stepKey(stepId){ return `nexus_${eq}_step_${stepId}`; }
+  function landingKey(){ return `nexus_${eq}_landing_complete`; }
+
+  // Friendly labels
+  const labels = {
+    rif: "RIF",
+    meg: "Megohmmeter Testing / Megger Reporting",
+    torque: "Torque",
+    l2: "L2-IVF",
+    prefod: "Pre-FOD",
+    phenolic: "Phenolic Display",
+    transformer: "Transformer Image",
+    fpv_photo: "Finished Product Verification Photo",
+    supporting: "Supporting Documents",
+    construction: "Construction Check Sheet"
+  };
+
+  const name = labels[id] || (id ? id.toUpperCase() : "Task");
+
+  document.title = `${name}${eq !== "NO_EQ" ? ` - ${eq}` : ""}`;
+  taskTitle.textContent = name;
+  taskMeta.textContent = `Equipment: ${eq}${id ? ` • Step: ${id}` : ""}`;
+  backBtn.href = `equipment.html${eq !== "NO_EQ" ? `?eq=${encodeURIComponent(eq)}` : ""}`;
+
+  if (!id){
+    taskBody.textContent = "Missing task id. Open this page from equipment.html.";
+    completeBtn.disabled = true;
+    undoBtn.disabled = true;
+    note.textContent = "";
+    return;
+  }
+
+  // Hide completion controls for non-completable steps
+  const isCompletable = !NON_COMPLETABLE.has(id);
+  if (!isCompletable){
+    completeBtn.style.display = "none";
+    undoBtn.style.display = "none";
+    note.textContent = "This step does not use STEP COMPLETE in this build.";
+    return;
+  }
+
+  // Initial state
+  function applyUI(){
+    const done = localStorage.getItem(stepKey(id)) === "1";
+    completeBtn.classList.toggle("complete", done);
+    note.textContent = done
+      ? "Marked complete. Return to Equipment to see the step button turn neon green."
+      : "Not complete yet. Press STEP COMPLETE when finished.";
+  }
+
+  function recomputeLandingFlag(){
+    // If any step for this equipment is complete, set landing flag to 1
+    // (equipment.html handles per-step UI; this flag is for index.html indicator)
+    // We only need to set it on completion; equipment.html will keep it accurate on refresh.
+    localStorage.setItem(landingKey(), "1");
+  }
+
+  completeBtn.addEventListener("click", () => {
+    localStorage.setItem(stepKey(id), "1");
+    recomputeLandingFlag();
+    applyUI();
+  });
+
+  undoBtn.addEventListener("click", () => {
+    localStorage.removeItem(stepKey(id));
+    // Do not clear landing flag here; equipment.html recomputes it correctly on load/focus.
+    applyUI();
+  });
+
+  applyUI();
+
+  // Example placeholder content per task (edit/replace with your real forms)
+  taskBody.innerHTML = `
+    <div style="font-weight:900; margin-bottom:10px;">${name} — Work Area</div>
+    <div style="opacity:.95; line-height:1.35;">
+      Put the real form / upload / inputs for <b>${name}</b> here.
+      When the work is finished, click <b>STEP COMPLETE</b>.
+    </div>
+  `;
+})();
+</script>
 </body>
 </html>
