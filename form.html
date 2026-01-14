@@ -84,6 +84,14 @@ h1{
   transform:translateY(-2px);
 }
 
+/* ===== STEP COMPLETE (NEON GREEN) ===== */
+.btn.complete{
+  background:#00ff66 !important;
+  color:#002b14 !important;
+  border-color:#00ff66 !important;
+  box-shadow:0 0 14px rgba(0,255,102,.85);
+}
+
 /* ===== MEDIA ===== */
 .media{
   margin-top:20px;
@@ -173,6 +181,11 @@ h1{
 
   <div id="buttonsWrap" class="button-panel">
     <div id="buttons"></div>
+
+    <!-- STEP COMPLETE button (added) -->
+    <button class="btn" id="stepCompleteBtn" type="button" style="display:none;">
+      STEP COMPLETE
+    </button>
   </div>
 
   <div id="media" class="media" style="display:none;"></div>
@@ -185,12 +198,13 @@ h1{
 <script src="app.js"></script>
 
 <!-- ===================== -->
-<!-- Equipment handling + link propagation -->
+<!-- Equipment handling + link propagation + STEP COMPLETE tracking -->
 <!-- ===================== -->
 <script>
 (function () {
   const qs = new URLSearchParams(location.search);
   const eq = (qs.get("eq") || "").trim();
+  const id = (qs.get("id") || qs.get("form") || "").trim(); // support either param name
 
   // Back link: prefer Equipment (keeps context), fallback to Home
   const backLink = document.getElementById("backLink");
@@ -205,10 +219,9 @@ h1{
     label.textContent = `Equipment: ${eq}`;
   }
 
-  if (!eq) return;
-
   // Ensure ALL internal links keep ?eq=
   function patchLinks(){
+    if (!eq) return;
     document.querySelectorAll('a[href]').forEach(a => {
       try{
         const url = new URL(a.getAttribute("href"), location.href);
@@ -228,6 +241,48 @@ h1{
     childList:true,
     subtree:true
   });
+
+  /* -----------------------------
+     STEP COMPLETE (per eq + id)
+     ----------------------------- */
+  const stepBtn = document.getElementById("stepCompleteBtn");
+
+  function stepKey(stepId){ return `nexus_${eq || "NO_EQ"}_step_${stepId}`; }
+  function landingKey(){ return `nexus_${eq || "NO_EQ"}_landing_complete`; }
+
+  function refreshStepBtn(){
+    if (!stepBtn) return;
+
+    // Only show STEP COMPLETE when we know both eq and id
+    const usable = !!eq && !!id;
+    stepBtn.style.display = usable ? "block" : "none";
+    if (!usable) return;
+
+    const done = localStorage.getItem(stepKey(id)) === "1";
+    stepBtn.classList.toggle("complete", done);
+  }
+
+  if (stepBtn){
+    stepBtn.addEventListener("click", () => {
+      if (!eq || !id) return;
+      const nowDone = !(localStorage.getItem(stepKey(id)) === "1");
+      if (nowDone){
+        localStorage.setItem(stepKey(id), "1");
+        localStorage.setItem(landingKey(), "1");
+      }else{
+        // Toggle off if clicked again
+        localStorage.removeItem(stepKey(id));
+      }
+      refreshStepBtn();
+    });
+  }
+
+  refreshStepBtn();
+
+  // Keep button state accurate if other pages update storage
+  window.addEventListener("storage", refreshStepBtn);
+  window.addEventListener("focus", refreshStepBtn);
+  window.addEventListener("pageshow", refreshStepBtn);
 })();
 </script>
 
