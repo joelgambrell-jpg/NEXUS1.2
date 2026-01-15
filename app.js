@@ -30,53 +30,65 @@
   const buttonsEl = document.getElementById("buttons");
   const mediaEl = document.getElementById("media");
 
-  // -------------------------
-  // STEP COMPLETE KEYS (matches equipment.html)
-  // -------------------------
+  // =========================
+  // Completion keys (match equipment.html / index.html logic)
+  // =========================
   function stepKey(stepId){ return `nexus_${eq || "NO_EQ"}_step_${stepId}`; }
   function landingKey(){ return `nexus_${eq || "NO_EQ"}_landing_complete`; }
 
-  // Keep your existing completion key support + add nexus tracking
+  // Keep your original completion key + add NEXUS completion keys
   function markDone() {
-    // Original behavior
     if (cfg.completedKey) localStorage.setItem(cfg.completedKey, "true");
-
-    // New behavior (only when eq + id exist)
-    if (eq && id){
+    if (eq && id) {
       localStorage.setItem(stepKey(id), "1");
       localStorage.setItem(landingKey(), "1");
     }
-
-    // If you added a STEP COMPLETE button in form.html, turn it green
-    const stepBtn = document.getElementById("stepCompleteBtn");
-    if (stepBtn) stepBtn.classList.add("complete");
+    refreshStepBtn();
   }
 
-  // OPTIONAL: wire a STEP COMPLETE button if present in form.html
-  (function wireStepCompleteButton(){
-    const stepBtn = document.getElementById("stepCompleteBtn");
-    if (!stepBtn) return;
-
-    // Only show if usable
-    stepBtn.style.display = (eq && id) ? "block" : "none";
-
-    // Initialize state
-    if (eq && id && localStorage.getItem(stepKey(id)) === "1"){
-      stepBtn.classList.add("complete");
+  function unmarkDone() {
+    if (cfg.completedKey) localStorage.removeItem(cfg.completedKey);
+    if (eq && id) {
+      localStorage.removeItem(stepKey(id));
+      // Do NOT clear landing key here; equipment.html recomputes it accurately.
     }
+    refreshStepBtn();
+  }
 
+  // =========================
+  // STEP COMPLETE button (always visible)
+  // =========================
+  const stepBtn = document.getElementById("stepCompleteBtn");
+
+  function isDone(){
+    return !!(eq && id && localStorage.getItem(stepKey(id)) === "1");
+  }
+
+  function refreshStepBtn(){
+    if (!stepBtn) return;
+    // Always visible per your request
+    stepBtn.style.display = "block";
+
+    // If eq/id missing, show but disable (prevents bad writes)
+    const usable = !!(eq && id);
+    stepBtn.disabled = !usable;
+    stepBtn.title = usable ? "" : "Missing eq or id in URL";
+
+    stepBtn.classList.toggle("complete", isDone());
+  }
+
+  if (stepBtn){
     stepBtn.addEventListener("click", () => {
-      // toggle behavior
       if (!eq || !id) return;
-      const done = localStorage.getItem(stepKey(id)) === "1";
-      if (done){
-        localStorage.removeItem(stepKey(id));
-        stepBtn.classList.remove("complete");
-      }else{
-        markDone();
-      }
+      if (isDone()) unmarkDone();
+      else markDone();
     });
-  })();
+  }
+
+  refreshStepBtn();
+  window.addEventListener("storage", refreshStepBtn);
+  window.addEventListener("focus", refreshStepBtn);
+  window.addEventListener("pageshow", refreshStepBtn);
 
   // =========================
   // Helper: add eq to INTERNAL links only
@@ -112,7 +124,7 @@
     buttonsWrap.style.display = "none";
     mediaEl.style.display = "block";
     mediaEl.innerHTML = `<iframe class="embed" src="${cfg.embedUrl}" title="${cfg.title || ""}"></iframe>`;
-    markDone(); // keep your behavior: entering embed marks complete
+    // Do NOT auto-complete here; completion is manual via STEP COMPLETE button
     return;
   }
 
@@ -126,7 +138,7 @@
         <a class="btn" href="${cfg.imageUrl}" target="_blank" rel="noopener noreferrer">Open Image in New Tab</a>
       </div>
     `;
-    markDone(); // keep your behavior: opening image step marks complete
+    // Do NOT auto-complete here; completion is manual via STEP COMPLETE button
 
     if (cfg.magnifier) {
       const img = document.getElementById("mainImg");
@@ -251,8 +263,10 @@
       a.rel = "noopener noreferrer";
     }
 
-    // Mark done when user clicks a button
-    a.addEventListener("click", markDone);
+    // NOTE: keep your original behavior, but we do NOT mark complete automatically.
+    // If you want clicking any button to mark complete, uncomment next line:
+    // a.addEventListener("click", markDone);
+
     buttonsEl.appendChild(a);
   });
 })();
