@@ -1,6 +1,7 @@
 <!-- =========================
      equipment.html
      (Buttons turn neon green once the step is completed on task.html)
+     + Progress bar (0–100%) based on completed steps
      ========================= -->
 <!doctype html>
 <html lang="en">
@@ -42,6 +43,34 @@
     border-color:#00ff66 !important;
     box-shadow:0 0 14px rgba(0,255,102,.85) !important;
   }
+
+  /* ===== Progress Bar ===== */
+  .progress-wrap{
+    margin: 10px 0 22px;
+    text-align:left;
+  }
+  .progress-label{
+    font-weight:900;
+    margin: 0 0 8px;
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+  }
+  .progress-track{
+    width:100%;
+    height:16px;
+    border-radius:999px;
+    background: rgba(0,0,0,0.28);
+    border:1px solid rgba(255,255,255,0.22);
+    overflow:hidden;
+  }
+  .progress-fill{
+    height:100%;
+    width:0%;
+    background:#00ff66;
+    box-shadow:0 0 12px rgba(0,255,102,.75);
+    transition: width .25s ease;
+  }
 </style>
 </head>
 
@@ -51,6 +80,17 @@
 
   <h1>Equipment Page</h1>
   <div class="eq" id="eqLabel"></div>
+
+  <!-- Progress bar -->
+  <div class="progress-wrap">
+    <div class="progress-label">
+      <div id="progressText">Progress: 0%</div>
+      <div id="progressCount">0/0</div>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+  </div>
 
   <div class="grid">
     <a class="btn" id="rifBtn" href="#">RIF</a>
@@ -105,6 +145,30 @@
     return `nexus_${eq || "NO_EQ"}_landing_complete`;
   }
 
+  // Progress elements
+  const progressFill = document.getElementById("progressFill");
+  const progressText = document.getElementById("progressText");
+  const progressCount = document.getElementById("progressCount");
+
+  function computeProgress(){
+    const total = steps.length;
+    let doneCount = 0;
+
+    steps.forEach(({stepId}) => {
+      if (localStorage.getItem(stepKey(stepId)) === "1") doneCount++;
+    });
+
+    const pct = total ? Math.round((doneCount / total) * 100) : 0;
+    return { pct, doneCount, total };
+  }
+
+  function refreshProgressBar(){
+    const { pct, doneCount, total } = computeProgress();
+    progressFill.style.width = `${pct}%`;
+    progressText.textContent = `Progress: ${pct}%`;
+    progressCount.textContent = `${doneCount}/${total}`;
+  }
+
   function refreshCompletionUI(){
     let anyComplete = false;
 
@@ -118,6 +182,9 @@
     });
 
     localStorage.setItem(landingKey(), anyComplete ? "1" : "0");
+
+    // NEW: progress bar
+    refreshProgressBar();
   }
 
   refreshCompletionUI();
