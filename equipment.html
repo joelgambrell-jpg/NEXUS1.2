@@ -1,10 +1,13 @@
 <!-- =========================
      equipment.html
-     FINAL DROP-IN + FIREBASE SYNC (cross-device)
-     - Energization button +25% size
-     - Neon BLUE when unlocked
-     - Radiating lightning retained
-     - Progress/unlock synced across devices via Firestore (optional)
+     FULL DROP-IN
+     - Progress bar (tasks only)
+     - Energization tab unlocks at 100% (neon blue + radiating lightning)
+     - Reference & Check Sheets bubble (no completion/progress)
+     - Energization Goal Date + Countdown
+     - Optional Firebase sync:
+         * steps sync across devices (Firestore equipment/{eq}/steps/{stepId})
+         * goal date + notification emails sync across devices (Firestore equipment/{eq})
      ========================= -->
 <!doctype html>
 <html lang="en">
@@ -73,6 +76,7 @@
     font-weight:900;
     margin:0 0 8px;
     display:flex; justify-content:space-between;
+    gap:10px;
   }
   .progress-track{
     width:100%; height:16px;
@@ -111,7 +115,7 @@
   #energizationWrap{
     position:relative;
     display:inline-block;
-    margin:12px 0 22px;
+    margin:12px 0 18px;
   }
 
   #energizationBtn{
@@ -189,6 +193,68 @@
   .b6{--a:225deg;--d:28px;animation:radiateOut 1.3s infinite .28s;}
   .b7{--a:270deg;--d:26px;animation:radiateOut 1.05s infinite .14s;}
   .b8{--a:315deg;--d:28px;animation:radiateOut 1.2s infinite .24s;}
+
+  /* ===== Goal + Countdown ===== */
+  .goal-card{
+    margin: 10px 0 18px;
+    padding: 14px 16px;
+    border-radius: 18px;
+    background: rgba(0,0,0,0.18);
+    border: 1px solid rgba(255,255,255,0.20);
+    text-align:left;
+  }
+  .goal-title{
+    font-weight:900;
+    margin:0 0 10px;
+    letter-spacing:0.02em;
+  }
+  .goal-row{ margin:10px 0; }
+  .goal-label{
+    display:block;
+    font-weight:900;
+    margin:0 0 6px;
+    font-size:13px;
+    opacity:.95;
+  }
+  .goal-input{
+    width:100%;
+    padding:12px 12px;
+    border-radius:12px;
+    border:1px solid rgba(255,255,255,0.18);
+    outline:none;
+    font-size:15px;
+    background: rgba(255,255,255,0.92);
+    color:#111;
+    font-weight:800;
+  }
+  .goal-actions{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-top:10px;
+  }
+  .goal-btn{
+    padding:10px 14px;
+    border-radius:999px;
+    font-weight:900;
+    cursor:pointer;
+    border:2px solid rgba(255,255,255,0.35);
+    background: rgba(0,0,0,0.20);
+    color:#fff;
+  }
+  .goal-btn.secondary{ opacity:.9; }
+  .countdown{
+    margin-top:12px;
+    padding-top:10px;
+    border-top:1px solid rgba(255,255,255,0.18);
+  }
+  .countdown-big{ font-weight:900; font-size:18px; }
+  .countdown-sub{
+    margin-top:4px;
+    font-weight:800;
+    opacity:.9;
+    font-size:13px;
+  }
 </style>
 </head>
 
@@ -206,6 +272,31 @@
     </div>
     <div class="progress-track">
       <div class="progress-fill" id="progressFill"></div>
+    </div>
+  </div>
+
+  <!-- ===== Energization Goal + Countdown ===== -->
+  <div class="goal-card" id="goalCard">
+    <div class="goal-title">Energization Goal</div>
+
+    <div class="goal-row">
+      <label class="goal-label" for="goalDate">Goal Date &amp; Time</label>
+      <input class="goal-input" id="goalDate" type="datetime-local" />
+    </div>
+
+    <div class="goal-row">
+      <label class="goal-label" for="notifyEmails">Notify Emails (comma-separated)</label>
+      <input class="goal-input" id="notifyEmails" type="text" placeholder="foreman@company.com, pm@company.com" />
+    </div>
+
+    <div class="goal-actions">
+      <button class="goal-btn" id="saveGoalBtn" type="button">Save Goal</button>
+      <button class="goal-btn secondary" id="clearGoalBtn" type="button">Clear</button>
+    </div>
+
+    <div class="countdown">
+      <div class="countdown-big" id="countdownBig">No goal set</div>
+      <div class="countdown-sub" id="countdownSub"></div>
     </div>
   </div>
 
@@ -249,14 +340,15 @@
   const qs = new URLSearchParams(location.search);
   const eq = (qs.get("eq") || "").trim();
 
-  document.getElementById("eqLabel").textContent = eq ? `Equipment: ${eq}` : "Missing equipment ID";
+  const eqLabel = document.getElementById("eqLabel");
+  if (eqLabel) eqLabel.textContent = eq ? `Equipment: ${eq}` : "Missing equipment ID";
 
   function link(id){
-    // keep your format; just safely encode the id
     return `task.html?id=${encodeURIComponent(id)}${eq ? `&eq=${encodeURIComponent(eq)}` : ""}`;
   }
   function stepKey(id){ return `nexus_${eq || "NO_EQ"}_step_${id}`; }
 
+  // TASKS count toward progress/unlock
   const taskSteps=[
     {id:"rif",btn:"rifBtn"},
     {id:"meg",btn:"lvtBtn"},
@@ -266,7 +358,7 @@
     {id:"fpv_photo",btn:"finishedPhotoBtn"}
   ];
 
-  // Supporting material ONLY (no step completion, no progress)
+  // Supporting material ONLY (no completion/progress)
   const refs=[
     {id:"construction",btn:"constructionBtn"},
     {id:"phenolic",btn:"phenolicBtn"},
@@ -274,83 +366,205 @@
     {id:"supporting",btn:"supportingBtn"}
   ];
 
-  [...taskSteps,...refs].forEach(s=>{
-    const el=document.getElementById(s.btn);
-    if(el) el.href=link(s.id);
+  [...taskSteps, ...refs].forEach(s=>{
+    const el = document.getElementById(s.btn);
+    if (el) el.href = link(s.id);
   });
 
-  const fill=document.getElementById("progressFill");
-  const txt=document.getElementById("progressText");
-  const cnt=document.getElementById("progressCount");
-  const eBtn=document.getElementById("energizationBtn");
+  const fill = document.getElementById("progressFill");
+  const txt  = document.getElementById("progressText");
+  const cnt  = document.getElementById("progressCount");
+  const eBtn = document.getElementById("energizationBtn");
+
+  function energizationHref(){
+    return `energization.html${eq ? `?eq=${encodeURIComponent(eq)}` : ""}`;
+  }
 
   function refresh(){
-    let done=0;
+    let done = 0;
 
-    // TASKS: completion UI + progress
     taskSteps.forEach(s=>{
-      const el=document.getElementById(s.btn);
-      const ok=localStorage.getItem(stepKey(s.id))==="1";
-      if (el) el.classList.toggle("complete",ok);
-      if(ok) done++;
+      const el = document.getElementById(s.btn);
+      const ok = localStorage.getItem(stepKey(s.id)) === "1";
+      if (el) el.classList.toggle("complete", ok);
+      if (ok) done++;
     });
 
-    // REFS: never show complete
+    // Refs never show completion
     refs.forEach(s=>{
-      const el=document.getElementById(s.btn);
-      if(el) el.classList.remove("complete");
+      const el = document.getElementById(s.btn);
+      if (el) el.classList.remove("complete");
     });
 
-    const pct=Math.round((done/taskSteps.length)*100);
-    fill.style.width=`${pct}%`;
-    txt.textContent=`Progress: ${pct}%`;
-    cnt.textContent=`${done}/${taskSteps.length}`;
+    const pct = taskSteps.length ? Math.round((done / taskSteps.length) * 100) : 0;
 
-    if(pct===100){
-      eBtn.classList.remove("locked");
-      eBtn.classList.add("unlocked");
-      eBtn.href=`energization.html${eq?`?eq=${encodeURIComponent(eq)}`:""}`;
-      eBtn.style.pointerEvents="auto";
-      eBtn.removeAttribute("aria-disabled");
-    }else{
-      eBtn.classList.add("locked");
-      eBtn.classList.remove("unlocked");
-      eBtn.href="#";
-      eBtn.style.pointerEvents="none";
-      eBtn.setAttribute("aria-disabled","true");
+    if (fill) fill.style.width = `${pct}%`;
+    if (txt)  txt.textContent = `Progress: ${pct}%`;
+    if (cnt)  cnt.textContent = `${done}/${taskSteps.length}`;
+
+    if (eBtn){
+      if (pct >= 100){
+        eBtn.classList.remove("locked");
+        eBtn.classList.add("unlocked");
+        eBtn.href = energizationHref();
+        eBtn.style.pointerEvents = "auto";
+        eBtn.removeAttribute("aria-disabled");
+      } else {
+        eBtn.classList.add("locked");
+        eBtn.classList.remove("unlocked");
+        eBtn.href = "#";
+        eBtn.style.pointerEvents = "none";
+        eBtn.setAttribute("aria-disabled","true");
+      }
     }
   }
 
+  // ===== Goal + Countdown (local + optional Firestore) =====
+  const goalDateEl = document.getElementById("goalDate");
+  const notifyEmailsEl = document.getElementById("notifyEmails");
+  const saveGoalBtn = document.getElementById("saveGoalBtn");
+  const clearGoalBtn = document.getElementById("clearGoalBtn");
+  const countdownBig = document.getElementById("countdownBig");
+  const countdownSub = document.getElementById("countdownSub");
+
+  function goalKey(){ return `nexus_${eq || "NO_EQ"}_energ_goal_iso`; }
+  function emailsKey(){ return `nexus_${eq || "NO_EQ"}_energ_goal_emails`; }
+
+  function loadGoalFromLocal(){
+    const iso = localStorage.getItem(goalKey()) || "";
+    const emails = localStorage.getItem(emailsKey()) || "";
+    if (goalDateEl) goalDateEl.value = iso ? iso.slice(0,16) : "";
+    if (notifyEmailsEl) notifyEmailsEl.value = emails;
+  }
+
+  function setGoalLocal(iso, emails){
+    if (iso) localStorage.setItem(goalKey(), iso);
+    else localStorage.removeItem(goalKey());
+    if (emails) localStorage.setItem(emailsKey(), emails);
+    else localStorage.removeItem(emailsKey());
+  }
+
+  async function setGoalFirestore(iso, emails){
+    try{
+      if (!window.NEXUS_FB?.db || !eq) return;
+      const { db, auth } = window.NEXUS_FB;
+
+      const { doc, setDoc, serverTimestamp, Timestamp } =
+        await import("https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js");
+
+      const ref = doc(db, "equipment", eq);
+
+      const dt = iso ? new Date(iso) : null;
+      const notifyEmails = (emails || "")
+        .split(",")
+        .map(s => s.trim())
+        .filter(Boolean);
+
+      await setDoc(ref, {
+        energizationGoalAt: dt ? Timestamp.fromDate(dt) : null,
+        energizationNotifyEmails: notifyEmails,
+        updatedAt: serverTimestamp(),
+        updatedBy: auth?.currentUser?.uid || null
+      }, { merge:true });
+    }catch(e){
+      console.warn("Firestore goal save failed:", e);
+    }
+  }
+
+  function pad2(n){ return String(n).padStart(2,"0"); }
+
+  function renderCountdown(){
+    if (!countdownBig || !countdownSub) return;
+
+    const iso = localStorage.getItem(goalKey());
+    if (!iso){
+      countdownBig.textContent = "No goal set";
+      countdownSub.textContent = "";
+      return;
+    }
+
+    const target = new Date(iso).getTime();
+    const now = Date.now();
+    let diff = target - now;
+
+    const past = diff < 0;
+    diff = Math.abs(diff);
+
+    const days = Math.floor(diff / (24*3600*1000));
+    const hrs  = Math.floor((diff % (24*3600*1000)) / (3600*1000));
+    const mins = Math.floor((diff % (3600*1000)) / (60*1000));
+    const secs = Math.floor((diff % (60*1000)) / 1000);
+
+    countdownBig.textContent =
+      (past ? "Past due by: " : "Time remaining: ") +
+      `${days}d ${pad2(hrs)}h ${pad2(mins)}m ${pad2(secs)}s`;
+
+    countdownSub.textContent = `Goal: ${new Date(iso).toLocaleString()}`;
+  }
+
+  let countdownTimer = null;
+  function startCountdown(){
+    if (countdownTimer) clearInterval(countdownTimer);
+    renderCountdown();
+    countdownTimer = setInterval(renderCountdown, 1000);
+  }
+
+  if (saveGoalBtn){
+    saveGoalBtn.addEventListener("click", async () => {
+      if (!eq) return;
+
+      const raw = (goalDateEl?.value || "").trim(); // "YYYY-MM-DDTHH:mm"
+      const emails = (notifyEmailsEl?.value || "").trim();
+      const iso = raw ? new Date(raw).toISOString() : "";
+
+      setGoalLocal(iso, emails);
+      await setGoalFirestore(iso, emails);
+      startCountdown();
+    });
+  }
+
+  if (clearGoalBtn){
+    clearGoalBtn.addEventListener("click", async () => {
+      setGoalLocal("", "");
+      if (goalDateEl) goalDateEl.value = "";
+      if (notifyEmailsEl) notifyEmailsEl.value = "";
+      await setGoalFirestore("", "");
+      startCountdown();
+    });
+  }
+
+  // Initial UI
   refresh();
-  window.addEventListener("focus",refresh);
-  window.addEventListener("pageshow",refresh);
-  window.addEventListener("storage",refresh);
+  loadGoalFromLocal();
+  startCountdown();
+
+  // Local refresh triggers
+  window.addEventListener("focus", () => { refresh(); renderCountdown(); });
+  window.addEventListener("pageshow", () => { refresh(); renderCountdown(); });
+  window.addEventListener("storage", () => { refresh(); renderCountdown(); });
 
   // =========================
-  // FIREBASE REAL-TIME SYNC (cross-device)
-  // - Mirrors Firestore steps -> localStorage -> refresh()
-  // - Does nothing if window.NEXUS_FB is not present
+  // FIREBASE REAL-TIME SYNC (optional)
+  // - Steps: equipment/{eq}/steps/{stepId} => mirrors into localStorage
+  // - Goal: equipment/{eq} doc fields => mirrors into localStorage
   // =========================
-  let fbUnsub = null;
+  let fbStepsUnsub = null;
 
-  async function startFirestoreListener(){
+  async function startFirestoreStepsListener(){
     try{
       if (!eq || !window.NEXUS_FB?.db) return;
-
       const { db } = window.NEXUS_FB;
 
       const { collection, onSnapshot } =
         await import("https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js");
 
       const stepsCol = collection(db, "equipment", eq, "steps");
-
-      // Only accept known task step IDs to drive progress/unlock
       const knownTaskIds = new Set(taskSteps.map(s => s.id));
 
-      fbUnsub = onSnapshot(stepsCol, (snap) => {
+      fbStepsUnsub = onSnapshot(stepsCol, (snap) => {
         snap.forEach(docSnap => {
           const stepId = docSnap.id;
-          if (!knownTaskIds.has(stepId)) return; // ignore refs/unknown docs
+          if (!knownTaskIds.has(stepId)) return; // tasks only drive progress/unlock
 
           const data = docSnap.data() || {};
           if (data.done) localStorage.setItem(stepKey(stepId), "1");
@@ -360,14 +574,44 @@
         refresh();
       });
     }catch(e){
-      console.warn("Firestore listener failed:", e);
+      console.warn("Firestore steps listener failed:", e);
     }
   }
 
-  startFirestoreListener();
+  async function startFirestoreGoalListener(){
+    try{
+      if (!eq || !window.NEXUS_FB?.db) return;
+      const { db } = window.NEXUS_FB;
+
+      const { doc, onSnapshot } =
+        await import("https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js");
+
+      const ref = doc(db, "equipment", eq);
+
+      onSnapshot(ref, (snap) => {
+        if (!snap.exists()) return;
+        const data = snap.data() || {};
+
+        const ts = data.energizationGoalAt;
+        const iso = ts?.toDate ? ts.toDate().toISOString() : "";
+
+        const emailsArr = Array.isArray(data.energizationNotifyEmails) ? data.energizationNotifyEmails : [];
+        const emails = emailsArr.join(", ");
+
+        setGoalLocal(iso, emails);
+        loadGoalFromLocal();
+        startCountdown();
+      });
+    }catch(e){
+      console.warn("Firestore goal listener failed:", e);
+    }
+  }
+
+  startFirestoreStepsListener();
+  startFirestoreGoalListener();
 
   window.addEventListener("beforeunload", () => {
-    try{ if (fbUnsub) fbUnsub(); }catch(e){}
+    try{ if (fbStepsUnsub) fbStepsUnsub(); }catch(e){}
   });
 })();
 </script>
