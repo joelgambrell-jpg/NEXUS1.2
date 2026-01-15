@@ -1,7 +1,9 @@
 <!-- =========================
      equipment.html
-     (Buttons turn neon green once the step is completed on task.html)
-     + Progress bar (0–100%) based on completed steps
+     + Progress bar (0–100%)
+     + Energization tab (unlocks at 100%)
+     + “Bubble” group for: Construction Check Sheet, Phenolic Display, Diagram Image, Supporting Documents
+     + Rename “Transformer Image” -> “Diagram Image” (no id/format changes)
      ========================= -->
 <!doctype html>
 <html lang="en">
@@ -27,7 +29,9 @@
   }
   h1{ margin:0 0 8px; font-size:34px; }
   .eq{ font-size:20px; font-weight:900; margin:0 0 18px; }
+
   .grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:16px; }
+
   .btn{
     width:100%; height:60px; background:var(--btn-bg); color:var(--btn-color);
     border:2px solid #ff0000; border-radius:12px; font-size:15px; font-weight:700;
@@ -44,9 +48,16 @@
     box-shadow:0 0 14px rgba(0,255,102,.85) !important;
   }
 
+  /* Locked state (energization) */
+  .btn.locked{
+    opacity:0.55;
+    cursor:not-allowed;
+    transform:none !important;
+  }
+
   /* ===== Progress Bar ===== */
   .progress-wrap{
-    margin: 10px 0 22px;
+    margin: 10px 0 14px;
     text-align:left;
   }
   .progress-label{
@@ -71,6 +82,45 @@
     box-shadow:0 0 12px rgba(0,255,102,.75);
     transition: width .25s ease;
   }
+
+  /* ===== Energization tab area ===== */
+  .top-actions{
+    margin: 12px 0 22px;
+    display:flex;
+    justify-content:center;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+  .tab-btn{
+    width:auto;
+    padding:0 18px;
+    height:46px;
+    border-radius:999px;
+    font-size:14px;
+  }
+
+  /* ===== Bubble group under tasks ===== */
+  .bubble{
+    margin-top:18px;
+    padding:16px;
+    border-radius:18px;
+    background: rgba(0,0,0,0.18);
+    border:1px solid rgba(255,255,255,0.20);
+    text-align:left;
+  }
+  .bubble-title{
+    font-weight:900;
+    margin:0 0 12px;
+    letter-spacing:0.02em;
+  }
+  .bubble-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:12px;
+  }
+  .bubble .btn{
+    height:54px; /* slightly smaller but same format */
+  }
 </style>
 </head>
 
@@ -92,17 +142,33 @@
     </div>
   </div>
 
+  <!-- Energization tab (unlocks at 100%) -->
+  <div class="top-actions">
+    <a class="btn tab-btn locked" id="energizationBtn" href="#" aria-disabled="true" title="Complete all steps to unlock">
+      Energization
+    </a>
+  </div>
+
+  <!-- Main task buttons -->
   <div class="grid">
     <a class="btn" id="rifBtn" href="#">RIF</a>
     <a class="btn" id="lvtBtn" href="#">Megohmmeter Testing</a>
     <a class="btn" id="torqueBtn" href="#">Torque</a>
     <a class="btn" id="l2Btn" href="#">L2-IVF</a>
     <a class="btn" id="prefodBtn" href="#">Pre-FOD</a>
-    <a class="btn" id="phenolicBtn" href="#">Phenolic Display</a>
-    <a class="btn" id="transformerBtn" href="#">Transformer Image</a>
     <a class="btn" id="finishedPhotoBtn" href="#">Finished Product Verification Photo</a>
-    <a class="btn" id="supportingBtn" href="#">Supporting Documents</a>
-    <a class="btn" id="constructionBtn" href="#">Construction Check Sheet</a>
+  </div>
+
+  <!-- Bubble group (moved items) -->
+  <div class="bubble">
+    <div class="bubble-title">Reference &amp; Check Sheets</div>
+    <div class="bubble-grid">
+      <a class="btn" id="constructionBtn" href="#">Construction Check Sheet</a>
+      <a class="btn" id="phenolicBtn" href="#">Phenolic Display</a>
+      <!-- Renamed label only; id/stepId unchanged -->
+      <a class="btn" id="transformerBtn" href="#">Diagram Image</a>
+      <a class="btn" id="supportingBtn" href="#">Supporting Documents</a>
+    </div>
   </div>
 
 </main>
@@ -119,6 +185,13 @@
     return `task.html?id=${encodeURIComponent(id)}${eq ? `&eq=${encodeURIComponent(eq)}` : ""}`;
   }
 
+  // Energization link (set your target page here)
+  function energizationLink(){
+    // Change to energization.html when you create it
+    return `energization.html${eq ? `?eq=${encodeURIComponent(eq)}` : ""}`;
+  }
+
+  // All steps that count toward 100% (includes the bubble items)
   const steps = [
     { btnId: "rifBtn",           stepId: "rif" },
     { btnId: "lvtBtn",           stepId: "meg" },
@@ -126,7 +199,7 @@
     { btnId: "l2Btn",            stepId: "l2" },
     { btnId: "prefodBtn",        stepId: "prefod" },
     { btnId: "phenolicBtn",      stepId: "phenolic" },
-    { btnId: "transformerBtn",   stepId: "transformer" },
+    { btnId: "transformerBtn",   stepId: "transformer" }, // label changed to Diagram Image
     { btnId: "finishedPhotoBtn", stepId: "fpv_photo" },
     { btnId: "supportingBtn",    stepId: "supporting" },
     { btnId: "constructionBtn",  stepId: "construction" },
@@ -150,6 +223,9 @@
   const progressText = document.getElementById("progressText");
   const progressCount = document.getElementById("progressCount");
 
+  // Energization
+  const energizationBtn = document.getElementById("energizationBtn");
+
   function computeProgress(){
     const total = steps.length;
     let doneCount = 0;
@@ -167,6 +243,25 @@
     progressFill.style.width = `${pct}%`;
     progressText.textContent = `Progress: ${pct}%`;
     progressCount.textContent = `${doneCount}/${total}`;
+    return pct;
+  }
+
+  function refreshEnergization(pct){
+    if (!energizationBtn) return;
+
+    if (pct >= 100){
+      energizationBtn.classList.remove("locked");
+      energizationBtn.removeAttribute("aria-disabled");
+      energizationBtn.title = "";
+      energizationBtn.href = energizationLink();
+      energizationBtn.style.pointerEvents = "auto";
+    } else {
+      energizationBtn.classList.add("locked");
+      energizationBtn.setAttribute("aria-disabled", "true");
+      energizationBtn.title = "Complete all steps to unlock";
+      energizationBtn.href = "#";
+      energizationBtn.style.pointerEvents = "none";
+    }
   }
 
   function refreshCompletionUI(){
@@ -183,8 +278,8 @@
 
     localStorage.setItem(landingKey(), anyComplete ? "1" : "0");
 
-    // NEW: progress bar
-    refreshProgressBar();
+    const pct = refreshProgressBar();
+    refreshEnergization(pct);
   }
 
   refreshCompletionUI();
