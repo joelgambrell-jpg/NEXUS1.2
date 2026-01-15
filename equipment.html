@@ -1,8 +1,8 @@
 <!-- =========================
      equipment.html
-     + Progress bar (0–100%)
-     + Energization tab (unlocks at 100%)
-     + “Bubble” group for: Construction Check Sheet, Phenolic Display, Diagram Image, Supporting Documents
+     + Progress bar (0–100%) counts ONLY real tasks
+     + Energization tab unlocks at 100% (tasks only)
+     + “Bubble” group for Reference & Check Sheets (NOT steps)
      + Rename “Transformer Image” -> “Diagram Image” (no id/format changes)
      ========================= -->
 <!doctype html>
@@ -131,7 +131,7 @@
   <h1>Equipment Page</h1>
   <div class="eq" id="eqLabel"></div>
 
-  <!-- Progress bar -->
+  <!-- Progress bar (TASKS ONLY) -->
   <div class="progress-wrap">
     <div class="progress-label">
       <div id="progressText">Progress: 0%</div>
@@ -142,14 +142,14 @@
     </div>
   </div>
 
-  <!-- Energization tab (unlocks at 100%) -->
+  <!-- Energization tab (unlocks at 100% tasks only) -->
   <div class="top-actions">
-    <a class="btn tab-btn locked" id="energizationBtn" href="#" aria-disabled="true" title="Complete all steps to unlock">
+    <a class="btn tab-btn locked" id="energizationBtn" href="#" aria-disabled="true" title="Complete all tasks to unlock">
       Energization
     </a>
   </div>
 
-  <!-- Main task buttons -->
+  <!-- Main task buttons (these are the ONLY completion steps) -->
   <div class="grid">
     <a class="btn" id="rifBtn" href="#">RIF</a>
     <a class="btn" id="lvtBtn" href="#">Megohmmeter Testing</a>
@@ -159,13 +159,13 @@
     <a class="btn" id="finishedPhotoBtn" href="#">Finished Product Verification Photo</a>
   </div>
 
-  <!-- Bubble group (moved items) -->
+  <!-- Bubble group (reference only; never turns green; not part of progress) -->
   <div class="bubble">
     <div class="bubble-title">Reference &amp; Check Sheets</div>
     <div class="bubble-grid">
       <a class="btn" id="constructionBtn" href="#">Construction Check Sheet</a>
       <a class="btn" id="phenolicBtn" href="#">Phenolic Display</a>
-      <!-- Renamed label only; id/stepId unchanged -->
+      <!-- Renamed label only; id unchanged -->
       <a class="btn" id="transformerBtn" href="#">Diagram Image</a>
       <a class="btn" id="supportingBtn" href="#">Supporting Documents</a>
     </div>
@@ -185,28 +185,37 @@
     return `task.html?id=${encodeURIComponent(id)}${eq ? `&eq=${encodeURIComponent(eq)}` : ""}`;
   }
 
-  // Energization link (set your target page here)
+  // Energization link
   function energizationLink(){
-    // Change to energization.html when you create it
     return `energization.html${eq ? `?eq=${encodeURIComponent(eq)}` : ""}`;
   }
 
-  // All steps that count toward 100% (includes the bubble items)
-  const steps = [
+  // Tasks that count toward 100% (ONLY these unlock energization)
+  const taskSteps = [
     { btnId: "rifBtn",           stepId: "rif" },
     { btnId: "lvtBtn",           stepId: "meg" },
     { btnId: "torqueBtn",        stepId: "torque" },
     { btnId: "l2Btn",            stepId: "l2" },
     { btnId: "prefodBtn",        stepId: "prefod" },
-    { btnId: "phenolicBtn",      stepId: "phenolic" },
-    { btnId: "transformerBtn",   stepId: "transformer" }, // label changed to Diagram Image
     { btnId: "finishedPhotoBtn", stepId: "fpv_photo" },
-    { btnId: "supportingBtn",    stepId: "supporting" },
-    { btnId: "constructionBtn",  stepId: "construction" },
   ];
 
-  // Set all button hrefs
-  steps.forEach(({btnId, stepId}) => {
+  // Reference-only buttons (NOT steps to complete)
+  const referenceLinks = [
+    { btnId: "phenolicBtn",    stepId: "phenolic" },
+    { btnId: "transformerBtn", stepId: "transformer" },
+    { btnId: "supportingBtn",  stepId: "supporting" },
+    { btnId: "constructionBtn",stepId: "construction" },
+  ];
+
+  // Set hrefs for tasks
+  taskSteps.forEach(({btnId, stepId}) => {
+    const el = document.getElementById(btnId);
+    if (el) el.href = link(stepId);
+  });
+
+  // Set hrefs for reference links
+  referenceLinks.forEach(({btnId, stepId}) => {
     const el = document.getElementById(btnId);
     if (el) el.href = link(stepId);
   });
@@ -227,10 +236,10 @@
   const energizationBtn = document.getElementById("energizationBtn");
 
   function computeProgress(){
-    const total = steps.length;
+    const total = taskSteps.length;
     let doneCount = 0;
 
-    steps.forEach(({stepId}) => {
+    taskSteps.forEach(({stepId}) => {
       if (localStorage.getItem(stepKey(stepId)) === "1") doneCount++;
     });
 
@@ -258,25 +267,30 @@
     } else {
       energizationBtn.classList.add("locked");
       energizationBtn.setAttribute("aria-disabled", "true");
-      energizationBtn.title = "Complete all steps to unlock";
+      energizationBtn.title = "Complete all tasks to unlock";
       energizationBtn.href = "#";
       energizationBtn.style.pointerEvents = "none";
     }
   }
 
   function refreshCompletionUI(){
-    let anyComplete = false;
-
-    steps.forEach(({btnId, stepId}) => {
+    // Only tasks can be complete/green
+    taskSteps.forEach(({btnId, stepId}) => {
       const el = document.getElementById(btnId);
       if (!el) return;
-
       const done = localStorage.getItem(stepKey(stepId)) === "1";
       el.classList.toggle("complete", done);
-      if (done) anyComplete = true;
     });
 
-    localStorage.setItem(landingKey(), anyComplete ? "1" : "0");
+    // Reference buttons: force NOT complete (prevents accidental green if old keys exist)
+    referenceLinks.forEach(({btnId}) => {
+      const el = document.getElementById(btnId);
+      if (el) el.classList.remove("complete");
+    });
+
+    // Landing flag based on tasks only
+    const anyTaskComplete = taskSteps.some(({stepId}) => localStorage.getItem(stepKey(stepId)) === "1");
+    localStorage.setItem(landingKey(), anyTaskComplete ? "1" : "0");
 
     const pct = refreshProgressBar();
     refreshEnergization(pct);
