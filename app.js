@@ -1,17 +1,7 @@
-/* =========================
-   app.js (DROP-IN REPLACEMENT)
-   - STEP COMPLETE always visible (uses #stepCompleteBtn in form.html)
-   - Adds UNDO STEP COMPLETE support (uses #undoStepBtn in form.html)
-   - Writes keys your equipment/index pages read:
-       nexus_<eq>_step_<id> = "1"
-       nexus_<eq>_landing_complete = "1"
-   - Does NOT auto-complete in embed/image/button modes (manual only)
-   - Preserves your embed/image/magnifier/button rendering + withEq()
-   ========================= */
 (function () {
   const params = new URLSearchParams(location.search);
   const id = (params.get("id") || "").trim();
-  const eq = (params.get("eq") || "").trim(); // equipment id from URL
+  const eq = (params.get("eq") || "").trim();
 
   if (!id || !window.FORMS || !window.FORMS[id]) {
     document.body.innerHTML =
@@ -28,7 +18,6 @@
   document.getElementById("page-title").textContent = cfg.title || "";
   document.getElementById("section-title").textContent = cfg.sectionTitle || "";
 
-  // show equipment label (if element exists in form.html)
   const eqLabel = document.getElementById("eqLabel");
   if (eqLabel) eqLabel.textContent = eq ? `Equipment: ${eq}` : "";
 
@@ -40,126 +29,87 @@
   const buttonsEl = document.getElementById("buttons");
   const mediaEl = document.getElementById("media");
 
-  // =========================
-  // Completion keys (match equipment.html / index.html logic)
-  // =========================
+  // Keys used by equipment.html / index.html
   function stepKey(stepId){ return `nexus_${eq || "NO_EQ"}_step_${stepId}`; }
   function landingKey(){ return `nexus_${eq || "NO_EQ"}_landing_complete`; }
 
-  // =========================
-  // STEP COMPLETE + UNDO buttons
-  // =========================
+  // Toggle button
   const stepBtn = document.getElementById("stepCompleteBtn");
-  const undoBtn = document.getElementById("undoStepBtn");
 
-  function isUsable(){ return !!(eq && id); }
-  function isDone(){ return !!(eq && id && localStorage.getItem(stepKey(id)) === "1"); }
+  function usable(){ return !!(eq && id); }
+  function done(){ return !!(eq && id && localStorage.getItem(stepKey(id)) === "1"); }
 
-  function refreshButtons(){
-    const usable = isUsable();
-    const done = isDone();
+  function setDoneState(nextDone){
+    if (!usable()) return;
 
-    if (stepBtn){
-      // Always visible
-      stepBtn.style.display = "block";
-      stepBtn.disabled = !usable;
-      stepBtn.title = usable ? "" : "Missing eq or id in URL";
-      stepBtn.classList.toggle("complete", done);
+    // Keep existing cfg.completedKey behavior (optional/legacy)
+    if (cfg.completedKey){
+      if (nextDone) localStorage.setItem(cfg.completedKey, "true");
+      else localStorage.removeItem(cfg.completedKey);
     }
 
-    if (undoBtn){
-      // Always visible
-      undoBtn.style.display = "block";
-      // Only enabled if there is something to undo
-      undoBtn.disabled = !(usable && done);
-      undoBtn.title = (usable && done) ? "" : (usable ? "Nothing to undo" : "Missing eq or id in URL");
-    }
-  }
-
-  function markDone() {
-    // keep your original completion key
-    if (cfg.completedKey) localStorage.setItem(cfg.completedKey, "true");
-
-    // add NEXUS completion keys
-    if (eq && id) {
+    if (nextDone){
       localStorage.setItem(stepKey(id), "1");
       localStorage.setItem(landingKey(), "1");
+    } else {
+      localStorage.removeItem(stepKey(id));
+      // Do not clear landing flag here; equipment.html recomputes it accurately.
     }
-    refreshButtons();
   }
 
-  function unmarkDone() {
-    // clear your original completion key
-    if (cfg.completedKey) localStorage.removeItem(cfg.completedKey);
+  function refreshStepBtn(){
+    if (!stepBtn) return;
 
-    // clear per-step completion
-    if (eq && id) {
-      localStorage.removeItem(stepKey(id));
-      // Do NOT clear landing key here; equipment.html recomputes it accurately.
-    }
-    refreshButtons();
+    // Always visible; disable if missing eq/id to prevent bad writes
+    stepBtn.style.display = "block";
+    stepBtn.disabled = !usable();
+    stepBtn.title = usable() ? "" : "Missing eq or id in URL";
+
+    stepBtn.classList.toggle("complete", done());
   }
 
   if (stepBtn){
     stepBtn.addEventListener("click", () => {
-      if (!isUsable()) return;
-      if (isDone()) unmarkDone();
-      else markDone();
+      if (!usable()) return;
+      const next = !done();
+      setDoneState(next);
+      refreshStepBtn();
     });
   }
 
-  if (undoBtn){
-    undoBtn.addEventListener("click", () => {
-      if (!isUsable()) return;
-      if (!isDone()) return;
-      unmarkDone();
-    });
-  }
+  refreshStepBtn();
+  window.addEventListener("storage", refreshStepBtn);
+  window.addEventListener("focus", refreshStepBtn);
+  window.addEventListener("pageshow", refreshStepBtn);
 
-  refreshButtons();
-  window.addEventListener("storage", refreshButtons);
-  window.addEventListener("focus", refreshButtons);
-  window.addEventListener("pageshow", refreshButtons);
-
-  // =========================
   // Helper: add eq to INTERNAL links only
-  // =========================
   function withEq(href) {
     if (!eq || !href) return href;
-
-    // Never touch full external URLs
     if (/^https?:\/\//i.test(href)) return href;
 
-    // Build absolute URL from current page for reliable parsing
     const u = new URL(href, location.href);
-
-    // Only patch links that stay on THIS site
     if (u.origin !== location.origin) return href;
 
-    // Always carry eq forward
     u.searchParams.set("eq", eq);
 
-    // Nice-to-have: if someone links to submit.html without form param, add it from current id
     if (u.pathname.endsWith("/submit.html") || u.pathname.endsWith("submit.html")) {
       if (!u.searchParams.get("form") && !u.searchParams.get("id")) {
         u.searchParams.set("form", id);
       }
     }
 
-    // Return a relative link (keeps your URLs clean)
     return u.pathname + u.search + u.hash;
   }
 
-  // ===== EMBED MODE =====
+  // EMBED MODE
   if (cfg.embedUrl) {
     buttonsWrap.style.display = "none";
     mediaEl.style.display = "block";
     mediaEl.innerHTML = `<iframe class="embed" src="${cfg.embedUrl}" title="${cfg.title || ""}"></iframe>`;
-    // Manual completion only
     return;
   }
 
-  // ===== IMAGE MODE + OPTIONAL MAGNIFIER =====
+  // IMAGE MODE (+ magnifier unchanged)
   if (cfg.imageUrl) {
     buttonsWrap.style.display = "none";
     mediaEl.style.display = "block";
@@ -169,7 +119,6 @@
         <a class="btn" href="${cfg.imageUrl}" target="_blank" rel="noopener noreferrer">Open Image in New Tab</a>
       </div>
     `;
-    // Manual completion only
 
     if (cfg.magnifier) {
       const img = document.getElementById("mainImg");
@@ -274,7 +223,7 @@
     return;
   }
 
-  // ===== BUTTON MODE =====
+  // BUTTON MODE
   buttonsWrap.style.display = "inline-block";
   mediaEl.style.display = "none";
   buttonsEl.innerHTML = "";
@@ -283,18 +232,13 @@
     const a = document.createElement("a");
     a.className = "btn";
     a.textContent = b.text || "Open";
-    a.href = b.href || "#";
+    a.href = withEq(b.href || "#");
 
-    // Always carry eq on internal links
-    a.href = withEq(a.href);
-
-    // External links open new tab (internal links stay same tab)
     if (/^https?:\/\//i.test(a.href)) {
       a.target = "_blank";
       a.rel = "noopener noreferrer";
     }
 
-    // Manual completion only (STEP COMPLETE button)
     buttonsEl.appendChild(a);
   });
 })();
