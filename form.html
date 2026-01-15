@@ -1,3 +1,10 @@
+<!-- =========================
+     form.html (DROP-IN REPLACEMENT)
+     - STEP COMPLETE always visible
+     - Adds UNDO STEP COMPLETE button
+     - Keeps your eq propagation + back-link logic
+     - Removes the inline step-complete logic (so app.js owns it cleanly)
+     ========================= -->
 <!doctype html>
 <html lang="en">
 <head>
@@ -14,10 +21,6 @@ body{
   color:#fff;
   background:#b60000;
   background-image:url("transformer.jpg");
-  background-repeat:no-repeat;
-  background-position:center center;
-  background-size:cover;
-  background-attachment:fixed;
   background-repeat:no-repeat;
   background-position:center center;
   background-size:cover;
@@ -80,8 +83,20 @@ h1{
   border:2px solid #00c2ff;
   cursor:pointer;
 }
-.btn:hover{
-  transform:translateY(-2px);
+.btn:hover{ transform:translateY(-2px); }
+
+/* Secondary button style (UNDO) */
+.btn.secondary{
+  color:#fff;
+  background:rgba(0,0,0,0.22);
+  border:2px solid rgba(255,255,255,0.35);
+}
+
+/* Disabled look */
+.btn:disabled{
+  opacity:0.55;
+  cursor:not-allowed;
+  transform:none;
 }
 
 /* ===== STEP COMPLETE (NEON GREEN) ===== */
@@ -93,9 +108,7 @@ h1{
 }
 
 /* ===== MEDIA ===== */
-.media{
-  margin-top:20px;
-}
+.media{ margin-top:20px; }
 .media img{
   max-width:100%;
   border-radius:18px;
@@ -163,12 +176,12 @@ h1{
   max-width: 100%;
   object-fit: contain;
 }
-
 </style>
 </head>
 
 <body>
 <div class="nx-header-wrap"><div class="nx-header"><img src="nexus.png" alt="NEXUS" /></div></div>
+
 <div class="container">
   <a class="back" id="backLink" href="index.html">← Back</a>
 
@@ -182,10 +195,9 @@ h1{
   <div id="buttonsWrap" class="button-panel">
     <div id="buttons"></div>
 
-    <!-- STEP COMPLETE button (added) -->
-    <button class="btn" id="stepCompleteBtn" type="button" style="display:none;">
-      STEP COMPLETE
-    </button>
+    <!-- STEP COMPLETE + UNDO (always visible; app.js will enable/disable + toggle green) -->
+    <button class="btn" id="stepCompleteBtn" type="button">STEP COMPLETE</button>
+    <button class="btn secondary" id="undoStepBtn" type="button">UNDO STEP COMPLETE</button>
   </div>
 
   <div id="media" class="media" style="display:none;"></div>
@@ -198,13 +210,12 @@ h1{
 <script src="app.js"></script>
 
 <!-- ===================== -->
-<!-- Equipment handling + link propagation + STEP COMPLETE tracking -->
+<!-- Equipment handling + link propagation (kept) -->
 <!-- ===================== -->
 <script>
 (function () {
   const qs = new URLSearchParams(location.search);
   const eq = (qs.get("eq") || "").trim();
-  const id = (qs.get("id") || qs.get("form") || "").trim(); // support either param name
 
   // Back link: prefer Equipment (keeps context), fallback to Home
   const backLink = document.getElementById("backLink");
@@ -215,13 +226,12 @@ h1{
 
   // Show equipment label
   const label = document.getElementById("eqLabel");
-  if (label && eq){
-    label.textContent = `Equipment: ${eq}`;
-  }
+  if (label) label.textContent = eq ? `Equipment: ${eq}` : "";
+
+  if (!eq) return;
 
   // Ensure ALL internal links keep ?eq=
   function patchLinks(){
-    if (!eq) return;
     document.querySelectorAll('a[href]').forEach(a => {
       try{
         const url = new URL(a.getAttribute("href"), location.href);
@@ -241,48 +251,6 @@ h1{
     childList:true,
     subtree:true
   });
-
-  /* -----------------------------
-     STEP COMPLETE (per eq + id)
-     ----------------------------- */
-  const stepBtn = document.getElementById("stepCompleteBtn");
-
-  function stepKey(stepId){ return `nexus_${eq || "NO_EQ"}_step_${stepId}`; }
-  function landingKey(){ return `nexus_${eq || "NO_EQ"}_landing_complete`; }
-
-  function refreshStepBtn(){
-    if (!stepBtn) return;
-
-    // Only show STEP COMPLETE when we know both eq and id
-    const usable = !!eq && !!id;
-    stepBtn.style.display = usable ? "block" : "none";
-    if (!usable) return;
-
-    const done = localStorage.getItem(stepKey(id)) === "1";
-    stepBtn.classList.toggle("complete", done);
-  }
-
-  if (stepBtn){
-    stepBtn.addEventListener("click", () => {
-      if (!eq || !id) return;
-      const nowDone = !(localStorage.getItem(stepKey(id)) === "1");
-      if (nowDone){
-        localStorage.setItem(stepKey(id), "1");
-        localStorage.setItem(landingKey(), "1");
-      }else{
-        // Toggle off if clicked again
-        localStorage.removeItem(stepKey(id));
-      }
-      refreshStepBtn();
-    });
-  }
-
-  refreshStepBtn();
-
-  // Keep button state accurate if other pages update storage
-  window.addEventListener("storage", refreshStepBtn);
-  window.addEventListener("focus", refreshStepBtn);
-  window.addEventListener("pageshow", refreshStepBtn);
 })();
 </script>
 
