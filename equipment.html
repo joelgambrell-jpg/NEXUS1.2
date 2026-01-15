@@ -1,9 +1,10 @@
 <!-- =========================
      equipment.html
-     FINAL DROP-IN
+     FINAL DROP-IN + FIREBASE SYNC (cross-device)
      - Energization button +25% size
      - Neon BLUE when unlocked
      - Radiating lightning retained
+     - Progress/unlock synced across devices via Firestore (optional)
      ========================= -->
 <!doctype html>
 <html lang="en">
@@ -113,7 +114,6 @@
     margin:12px 0 22px;
   }
 
-  /* 25% larger than previous small (44px → ~55px) */
   #energizationBtn{
     height:55px;
     padding:0 18px;
@@ -241,13 +241,21 @@
 </main>
 </div>
 
-<script>
-  const qs=new URLSearchParams(location.search);
-  const eq=(qs.get("eq")||"").trim();
-  document.getElementById("eqLabel").textContent=eq?`Equipment: ${eq}`:"Missing equipment ID";
+<!-- OPTIONAL (recommended): include your Firebase init that sets window.NEXUS_FB = { db, auth } -->
+<!-- <script type="module" src="firebase.js"></script> -->
 
-  function link(id){return`task.html?id=${id}${eq?`&eq=${encodeURIComponent(eq)}`:""}`;}
-  function stepKey(id){return`nexus_${eq||"NO_EQ"}_step_${id}`;}
+<script>
+(function () {
+  const qs = new URLSearchParams(location.search);
+  const eq = (qs.get("eq") || "").trim();
+
+  document.getElementById("eqLabel").textContent = eq ? `Equipment: ${eq}` : "Missing equipment ID";
+
+  function link(id){
+    // keep your format; just safely encode the id
+    return `task.html?id=${encodeURIComponent(id)}${eq ? `&eq=${encodeURIComponent(eq)}` : ""}`;
+  }
+  function stepKey(id){ return `nexus_${eq || "NO_EQ"}_step_${id}`; }
 
   const taskSteps=[
     {id:"rif",btn:"rifBtn"},
@@ -257,6 +265,8 @@
     {id:"prefod",btn:"prefodBtn"},
     {id:"fpv_photo",btn:"finishedPhotoBtn"}
   ];
+
+  // Supporting material ONLY (no step completion, no progress)
   const refs=[
     {id:"construction",btn:"constructionBtn"},
     {id:"phenolic",btn:"phenolicBtn"},
@@ -276,12 +286,16 @@
 
   function refresh(){
     let done=0;
+
+    // TASKS: completion UI + progress
     taskSteps.forEach(s=>{
       const el=document.getElementById(s.btn);
       const ok=localStorage.getItem(stepKey(s.id))==="1";
-      el.classList.toggle("complete",ok);
+      if (el) el.classList.toggle("complete",ok);
       if(ok) done++;
     });
+
+    // REFS: never show complete
     refs.forEach(s=>{
       const el=document.getElementById(s.btn);
       if(el) el.classList.remove("complete");
@@ -309,8 +323,53 @@
 
   refresh();
   window.addEventListener("focus",refresh);
-  window.addEventListener("storage",refresh);
   window.addEventListener("pageshow",refresh);
+  window.addEventListener("storage",refresh);
+
+  // =========================
+  // FIREBASE REAL-TIME SYNC (cross-device)
+  // - Mirrors Firestore steps -> localStorage -> refresh()
+  // - Does nothing if window.NEXUS_FB is not present
+  // =========================
+  let fbUnsub = null;
+
+  async function startFirestoreListener(){
+    try{
+      if (!eq || !window.NEXUS_FB?.db) return;
+
+      const { db } = window.NEXUS_FB;
+
+      const { collection, onSnapshot } =
+        await import("https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js");
+
+      const stepsCol = collection(db, "equipment", eq, "steps");
+
+      // Only accept known task step IDs to drive progress/unlock
+      const knownTaskIds = new Set(taskSteps.map(s => s.id));
+
+      fbUnsub = onSnapshot(stepsCol, (snap) => {
+        snap.forEach(docSnap => {
+          const stepId = docSnap.id;
+          if (!knownTaskIds.has(stepId)) return; // ignore refs/unknown docs
+
+          const data = docSnap.data() || {};
+          if (data.done) localStorage.setItem(stepKey(stepId), "1");
+          else localStorage.removeItem(stepKey(stepId));
+        });
+
+        refresh();
+      });
+    }catch(e){
+      console.warn("Firestore listener failed:", e);
+    }
+  }
+
+  startFirestoreListener();
+
+  window.addEventListener("beforeunload", () => {
+    try{ if (fbUnsub) fbUnsub(); }catch(e){}
+  });
+})();
 </script>
 </body>
 </html>
