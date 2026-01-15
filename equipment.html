@@ -1,9 +1,6 @@
 <!-- =========================
      equipment.html
-     + Progress bar (0–100%) counts ONLY real tasks
-     + Energization tab unlocks at 100% (tasks only)
-     + “Bubble” group for Reference & Check Sheets (NOT steps)
-     + Rename “Transformer Image” -> “Diagram Image” (no id/format changes)
+     FINAL DROP-IN (realistic lightning on unlocked Energization)
      ========================= -->
 <!doctype html>
 <html lang="en">
@@ -37,10 +34,10 @@
     border:2px solid #ff0000; border-radius:12px; font-size:15px; font-weight:700;
     cursor:pointer; display:inline-flex; justify-content:center; align-items:center;
     text-decoration:none; transition:0.2s; box-shadow:0 0 12px #ff0000;
+    position:relative;
   }
   .btn:hover{ background:var(--btn-hover-bg); color:var(--btn-hover-color); transform:translateY(-2px); }
 
-  /* Completed step state (neon green) */
   .btn.complete{
     background:#00ff66 !important;
     color:#002b14 !important;
@@ -48,7 +45,6 @@
     box-shadow:0 0 14px rgba(0,255,102,.85) !important;
   }
 
-  /* Locked state (energization) */
   .btn.locked{
     opacity:0.55;
     cursor:not-allowed;
@@ -56,22 +52,18 @@
   }
 
   /* ===== Progress Bar ===== */
-  .progress-wrap{
-    margin: 10px 0 14px;
-    text-align:left;
-  }
+  .progress-wrap{ margin:10px 0 14px; text-align:left; }
   .progress-label{
     font-weight:900;
-    margin: 0 0 8px;
+    margin:0 0 8px;
     display:flex;
     justify-content:space-between;
-    gap:10px;
   }
   .progress-track{
     width:100%;
     height:16px;
     border-radius:999px;
-    background: rgba(0,0,0,0.28);
+    background:rgba(0,0,0,0.28);
     border:1px solid rgba(255,255,255,0.22);
     overflow:hidden;
   }
@@ -80,46 +72,153 @@
     width:0%;
     background:#00ff66;
     box-shadow:0 0 12px rgba(0,255,102,.75);
-    transition: width .25s ease;
+    transition:width .25s ease;
   }
 
-  /* ===== Energization tab area ===== */
-  .top-actions{
-    margin: 12px 0 22px;
-    display:flex;
-    justify-content:center;
-    gap:12px;
-    flex-wrap:wrap;
-  }
-  .tab-btn{
-    width:auto;
-    padding:0 18px;
-    height:46px;
-    border-radius:999px;
-    font-size:14px;
-  }
-
-  /* ===== Bubble group under tasks ===== */
+  /* ===== Bubble ===== */
   .bubble{
     margin-top:18px;
     padding:16px;
     border-radius:18px;
-    background: rgba(0,0,0,0.18);
+    background:rgba(0,0,0,0.18);
     border:1px solid rgba(255,255,255,0.20);
     text-align:left;
   }
-  .bubble-title{
-    font-weight:900;
-    margin:0 0 12px;
-    letter-spacing:0.02em;
-  }
+  .bubble-title{ font-weight:900; margin:0 0 12px; }
   .bubble-grid{
     display:grid;
     grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
     gap:12px;
   }
-  .bubble .btn{
-    height:54px; /* slightly smaller but same format */
+  .bubble .btn{ height:54px; }
+
+  /* =========================
+     Energization (Realistic Lightning)
+     ========================= */
+  #energizationBtn{
+    height:72px;               /* larger */
+    font-size:18px;
+    font-weight:900;
+    padding:0 30px;
+    border-radius:14px;
+    overflow:hidden;
+  }
+
+  /* Unlocked base */
+  #energizationBtn.unlocked{
+    background:#00ff66 !important;
+    color:#002b14 !important;
+    border-color:#00ff66 !important;
+    box-shadow:
+      0 0 18px rgba(0,255,102,.95),
+      0 0 42px rgba(0,255,102,.70);
+    animation:energizeGlow 1.6s infinite ease-in-out;
+  }
+
+  /* Electric arcs layer 1 */
+  #energizationBtn.unlocked::before{
+    content:"";
+    position:absolute;
+    inset:-30%;
+    background:
+      linear-gradient(90deg,
+        rgba(255,255,255,0) 0%,
+        rgba(255,255,255,.90) 8%,
+        rgba(120,255,190,.65) 12%,
+        rgba(255,255,255,0) 18%,
+        rgba(255,255,255,0) 100%
+      );
+    transform:rotate(-10deg) translateX(-120%);
+    opacity:0.0;
+    filter:blur(0.2px);
+    mix-blend-mode:screen;
+    animation:arcSweep 0.75s infinite steps(2,end);
+    pointer-events:none;
+  }
+
+  /* Electric arcs layer 2 (different angle/speed) */
+  #energizationBtn.unlocked::after{
+    content:"";
+    position:absolute;
+    inset:-35%;
+    background:
+      linear-gradient(90deg,
+        rgba(255,255,255,0) 0%,
+        rgba(255,255,255,.85) 10%,
+        rgba(120,255,190,.55) 14%,
+        rgba(255,255,255,0) 22%,
+        rgba(255,255,255,0) 100%
+      );
+    transform:rotate(12deg) translateX(-120%);
+    opacity:0.0;
+    filter:blur(0.6px);
+    mix-blend-mode:screen;
+    animation:arcSweep2 1.05s infinite steps(3,end);
+    pointer-events:none;
+  }
+
+  /* Inner “spark” cracks (adds jaggedness) */
+  #energizationBtn.unlocked .sparkline{
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+  }
+  #energizationBtn.unlocked .sparkline::before,
+  #energizationBtn.unlocked .sparkline::after{
+    content:"";
+    position:absolute;
+    left:12%;
+    right:12%;
+    top:50%;
+    height:2px;
+    background:rgba(255,255,255,.85);
+    box-shadow:0 0 10px rgba(255,255,255,.8);
+    transform:translateY(-50%) skewX(-20deg);
+    opacity:0;
+    animation:sparkFlicker 0.35s infinite steps(2,end);
+  }
+  #energizationBtn.unlocked .sparkline::after{
+    top:62%;
+    left:18%;
+    right:18%;
+    opacity:0;
+    filter:blur(0.3px);
+    animation-duration:0.42s;
+    animation-delay:0.12s;
+  }
+
+  @keyframes energizeGlow{
+    0%   { box-shadow:0 0 14px rgba(0,255,102,.80), 0 0 34px rgba(0,255,102,.55); }
+    50%  { box-shadow:0 0 22px rgba(0,255,102,1.00), 0 0 52px rgba(0,255,102,.80); }
+    100% { box-shadow:0 0 14px rgba(0,255,102,.80), 0 0 34px rgba(0,255,102,.55); }
+  }
+
+  /* Fast sweep + flicker (layer 1) */
+  @keyframes arcSweep{
+    0%   { opacity:0; transform:rotate(-10deg) translateX(-140%); }
+    10%  { opacity:1; }
+    35%  { opacity:0.85; }
+    55%  { opacity:0.2; }
+    80%  { opacity:0.9; }
+    100% { opacity:0; transform:rotate(-10deg) translateX(140%); }
+  }
+
+  /* Slower sweep (layer 2) */
+  @keyframes arcSweep2{
+    0%   { opacity:0; transform:rotate(12deg) translateX(-150%); }
+    15%  { opacity:0.9; }
+    40%  { opacity:0.25; }
+    60%  { opacity:0.8; }
+    100% { opacity:0; transform:rotate(12deg) translateX(150%); }
+  }
+
+  /* Random-ish spark flicker using steps */
+  @keyframes sparkFlicker{
+    0%   { opacity:0; transform:translateY(-50%) skewX(-20deg) scaleX(0.6); }
+    25%  { opacity:1; transform:translateY(-50%) skewX(-18deg) scaleX(1); }
+    50%  { opacity:0.2; transform:translateY(-50%) skewX(-26deg) scaleX(0.9); }
+    75%  { opacity:1; transform:translateY(-50%) skewX(-14deg) scaleX(1.05); }
+    100% { opacity:0; transform:translateY(-50%) skewX(-22deg) scaleX(0.7); }
   }
 </style>
 </head>
@@ -131,7 +230,6 @@
   <h1>Equipment Page</h1>
   <div class="eq" id="eqLabel"></div>
 
-  <!-- Progress bar (TASKS ONLY) -->
   <div class="progress-wrap">
     <div class="progress-label">
       <div id="progressText">Progress: 0%</div>
@@ -142,32 +240,30 @@
     </div>
   </div>
 
-  <!-- Energization tab (unlocks at 100% tasks only) -->
-  <div class="top-actions">
-    <a class="btn tab-btn locked" id="energizationBtn" href="#" aria-disabled="true" title="Complete all tasks to unlock">
+  <div style="margin:12px 0 22px;">
+    <a class="btn locked" id="energizationBtn" href="#" aria-disabled="true">
       Energization
+      <!-- extra layer for crackle lines when unlocked -->
+      <span class="sparkline" aria-hidden="true"></span>
     </a>
   </div>
 
-  <!-- Main task buttons (these are the ONLY completion steps) -->
   <div class="grid">
-    <a class="btn" id="rifBtn" href="#">RIF</a>
-    <a class="btn" id="lvtBtn" href="#">Megohmmeter Testing</a>
-    <a class="btn" id="torqueBtn" href="#">Torque</a>
-    <a class="btn" id="l2Btn" href="#">L2-IVF</a>
-    <a class="btn" id="prefodBtn" href="#">Pre-FOD</a>
-    <a class="btn" id="finishedPhotoBtn" href="#">Finished Product Verification Photo</a>
+    <a class="btn" id="rifBtn">RIF</a>
+    <a class="btn" id="lvtBtn">Megohmmeter Testing</a>
+    <a class="btn" id="torqueBtn">Torque</a>
+    <a class="btn" id="l2Btn">L2-IVF</a>
+    <a class="btn" id="prefodBtn">Pre-FOD</a>
+    <a class="btn" id="finishedPhotoBtn">Finished Product Verification Photo</a>
   </div>
 
-  <!-- Bubble group (reference only; never turns green; not part of progress) -->
   <div class="bubble">
     <div class="bubble-title">Reference &amp; Check Sheets</div>
     <div class="bubble-grid">
-      <a class="btn" id="constructionBtn" href="#">Construction Check Sheet</a>
-      <a class="btn" id="phenolicBtn" href="#">Phenolic Display</a>
-      <!-- Renamed label only; id unchanged -->
-      <a class="btn" id="transformerBtn" href="#">Diagram Image</a>
-      <a class="btn" id="supportingBtn" href="#">Supporting Documents</a>
+      <a class="btn" id="constructionBtn">Construction Check Sheet</a>
+      <a class="btn" id="phenolicBtn">Phenolic Display</a>
+      <a class="btn" id="transformerBtn">Diagram Image</a>
+      <a class="btn" id="supportingBtn">Supporting Documents</a>
     </div>
   </div>
 
@@ -175,138 +271,78 @@
 </div>
 
 <script>
-  const qs = new URLSearchParams(location.search);
-  const eq = (qs.get("eq") || "").trim();
+const qs=new URLSearchParams(location.search);
+const eq=(qs.get("eq")||"").trim();
+document.getElementById("eqLabel").textContent=eq?`Equipment: ${eq}`:"Missing equipment ID";
 
-  document.title = eq ? `Equipment ${eq}` : "Equipment";
-  document.getElementById("eqLabel").textContent = eq ? `Equipment: ${eq}` : "Missing equipment ID (eq)";
+function link(id){return`task.html?id=${encodeURIComponent(id)}${eq?`&eq=${encodeURIComponent(eq)}`:""}`;}
+function stepKey(id){return`nexus_${eq||"NO_EQ"}_step_${id}`;}
 
-  function link(id){
-    return `task.html?id=${encodeURIComponent(id)}${eq ? `&eq=${encodeURIComponent(eq)}` : ""}`;
-  }
+const taskSteps=[
+  {id:"rif",btn:"rifBtn"},
+  {id:"meg",btn:"lvtBtn"},
+  {id:"torque",btn:"torqueBtn"},
+  {id:"l2",btn:"l2Btn"},
+  {id:"prefod",btn:"prefodBtn"},
+  {id:"fpv_photo",btn:"finishedPhotoBtn"}
+];
 
-  // Energization link
-  function energizationLink(){
-    return `energization.html${eq ? `?eq=${encodeURIComponent(eq)}` : ""}`;
-  }
+const refs=[
+  {id:"construction",btn:"constructionBtn"},
+  {id:"phenolic",btn:"phenolicBtn"},
+  {id:"transformer",btn:"transformerBtn"},
+  {id:"supporting",btn:"supportingBtn"}
+];
 
-  // Tasks that count toward 100% (ONLY these unlock energization)
-  const taskSteps = [
-    { btnId: "rifBtn",           stepId: "rif" },
-    { btnId: "lvtBtn",           stepId: "meg" },
-    { btnId: "torqueBtn",        stepId: "torque" },
-    { btnId: "l2Btn",            stepId: "l2" },
-    { btnId: "prefodBtn",        stepId: "prefod" },
-    { btnId: "finishedPhotoBtn", stepId: "fpv_photo" },
-  ];
+[...taskSteps,...refs].forEach(s=>{
+  const el=document.getElementById(s.btn);
+  if(el) el.href=link(s.id);
+});
 
-  // Reference-only buttons (NOT steps to complete)
-  const referenceLinks = [
-    { btnId: "phenolicBtn",    stepId: "phenolic" },
-    { btnId: "transformerBtn", stepId: "transformer" },
-    { btnId: "supportingBtn",  stepId: "supporting" },
-    { btnId: "constructionBtn",stepId: "construction" },
-  ];
+const fill=document.getElementById("progressFill");
+const txt=document.getElementById("progressText");
+const cnt=document.getElementById("progressCount");
+const eBtn=document.getElementById("energizationBtn");
 
-  // Set hrefs for tasks
-  taskSteps.forEach(({btnId, stepId}) => {
-    const el = document.getElementById(btnId);
-    if (el) el.href = link(stepId);
+function refresh(){
+  let done=0;
+  taskSteps.forEach(s=>{
+    const el=document.getElementById(s.btn);
+    const ok=localStorage.getItem(stepKey(s.id))==="1";
+    el.classList.toggle("complete",ok);
+    if(ok) done++;
   });
 
-  // Set hrefs for reference links
-  referenceLinks.forEach(({btnId, stepId}) => {
-    const el = document.getElementById(btnId);
-    if (el) el.href = link(stepId);
+  // Reference buttons never show as complete
+  refs.forEach(s=>{
+    const el=document.getElementById(s.btn);
+    if(el) el.classList.remove("complete");
   });
 
-  function stepKey(stepId){
-    return `nexus_${eq || "NO_EQ"}_step_${stepId}`;
+  const pct=Math.round((done/taskSteps.length)*100);
+  fill.style.width=`${pct}%`;
+  txt.textContent=`Progress: ${pct}%`;
+  cnt.textContent=`${done}/${taskSteps.length}`;
+
+  if(pct===100){
+    eBtn.classList.remove("locked");
+    eBtn.classList.add("unlocked");
+    eBtn.href=`energization.html${eq?`?eq=${encodeURIComponent(eq)}`:""}`;
+    eBtn.style.pointerEvents="auto";
+    eBtn.removeAttribute("aria-disabled");
+  }else{
+    eBtn.classList.add("locked");
+    eBtn.classList.remove("unlocked");
+    eBtn.href="#";
+    eBtn.style.pointerEvents="none";
+    eBtn.setAttribute("aria-disabled","true");
   }
-  function landingKey(){
-    return `nexus_${eq || "NO_EQ"}_landing_complete`;
-  }
+}
 
-  // Progress elements
-  const progressFill = document.getElementById("progressFill");
-  const progressText = document.getElementById("progressText");
-  const progressCount = document.getElementById("progressCount");
-
-  // Energization
-  const energizationBtn = document.getElementById("energizationBtn");
-
-  function computeProgress(){
-    const total = taskSteps.length;
-    let doneCount = 0;
-
-    taskSteps.forEach(({stepId}) => {
-      if (localStorage.getItem(stepKey(stepId)) === "1") doneCount++;
-    });
-
-    const pct = total ? Math.round((doneCount / total) * 100) : 0;
-    return { pct, doneCount, total };
-  }
-
-  function refreshProgressBar(){
-    const { pct, doneCount, total } = computeProgress();
-    progressFill.style.width = `${pct}%`;
-    progressText.textContent = `Progress: ${pct}%`;
-    progressCount.textContent = `${doneCount}/${total}`;
-    return pct;
-  }
-
-  function refreshEnergization(pct){
-    if (!energizationBtn) return;
-
-    if (pct >= 100){
-      energizationBtn.classList.remove("locked");
-      energizationBtn.removeAttribute("aria-disabled");
-      energizationBtn.title = "";
-      energizationBtn.href = energizationLink();
-      energizationBtn.style.pointerEvents = "auto";
-    } else {
-      energizationBtn.classList.add("locked");
-      energizationBtn.setAttribute("aria-disabled", "true");
-      energizationBtn.title = "Complete all tasks to unlock";
-      energizationBtn.href = "#";
-      energizationBtn.style.pointerEvents = "none";
-    }
-  }
-
-  function refreshCompletionUI(){
-    // Only tasks can be complete/green
-    taskSteps.forEach(({btnId, stepId}) => {
-      const el = document.getElementById(btnId);
-      if (!el) return;
-      const done = localStorage.getItem(stepKey(stepId)) === "1";
-      el.classList.toggle("complete", done);
-    });
-
-    // Reference buttons: force NOT complete (prevents accidental green if old keys exist)
-    referenceLinks.forEach(({btnId}) => {
-      const el = document.getElementById(btnId);
-      if (el) el.classList.remove("complete");
-    });
-
-    // Landing flag based on tasks only
-    const anyTaskComplete = taskSteps.some(({stepId}) => localStorage.getItem(stepKey(stepId)) === "1");
-    localStorage.setItem(landingKey(), anyTaskComplete ? "1" : "0");
-
-    const pct = refreshProgressBar();
-    refreshEnergization(pct);
-  }
-
-  refreshCompletionUI();
-  window.addEventListener("focus", refreshCompletionUI);
-  window.addEventListener("pageshow", refreshCompletionUI);
-
-  window.addEventListener("storage", (e) => {
-    if (!e.key) return;
-    const prefix = `nexus_${eq || "NO_EQ"}_step_`;
-    if (e.key.startsWith(prefix) || e.key === landingKey()){
-      refreshCompletionUI();
-    }
-  });
+refresh();
+window.addEventListener("focus",refresh);
+window.addEventListener("storage",refresh);
+window.addEventListener("pageshow",refresh);
 </script>
 </body>
 </html>
