@@ -33,13 +33,62 @@
   function stepKey(stepId){ return `nexus_${eq || "NO_EQ"}_step_${stepId}`; }
   function landingKey(){ return `nexus_${eq || "NO_EQ"}_landing_complete`; }
 
+  // =========================
+  // Firebase sync (optional)
+  // - expects window.NEXUS_FB = { db, auth } from your firebase init script
+  // - mirrors Firestore <-> localStorage
+  // =========================
+  async function fbSetStep(eqId, stepId, isDone){
+    try{
+      if (!window.NEXUS_FB?.db || !eqId || !stepId) return;
+      const { db, auth } = window.NEXUS_FB;
+
+      const { doc, setDoc, serverTimestamp } =
+        await import("https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js");
+
+      const ref = doc(db, "equipment", eqId, "steps", stepId);
+      await setDoc(ref, {
+        done: !!isDone,
+        updatedAt: serverTimestamp(),
+        updatedBy: auth?.currentUser?.uid || null
+      }, { merge:true });
+    }catch(e){
+      // silent fail: localStorage still works offline
+      console.warn("Firebase step sync failed:", e);
+    }
+  }
+
+  let fbUnsub = null;
+  async function fbListenStep(eqId, stepId){
+    try{
+      if (!window.NEXUS_FB?.db || !eqId || !stepId) return;
+      const { db } = window.NEXUS_FB;
+
+      const { doc, onSnapshot } =
+        await import("https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js");
+
+      const ref = doc(db, "equipment", eqId, "steps", stepId);
+
+      // Listen for remote changes and mirror into localStorage
+      fbUnsub = onSnapshot(ref, (snap) => {
+        if (!snap.exists()) return;
+        const data = snap.data() || {};
+        if (data.done) localStorage.setItem(stepKey(stepId), "1");
+        else localStorage.removeItem(stepKey(stepId));
+        refreshStepBtn();
+      });
+    }catch(e){
+      console.warn("Firebase listener failed:", e);
+    }
+  }
+
   // Toggle button
   const stepBtn = document.getElementById("stepCompleteBtn");
 
   function usable(){ return !!(eq && id); }
   function done(){ return !!(eq && id && localStorage.getItem(stepKey(id)) === "1"); }
 
-  function setDoneState(nextDone){
+  async function setDoneState(nextDone){
     if (!usable()) return;
 
     // Keep existing cfg.completedKey behavior (optional/legacy)
@@ -48,6 +97,7 @@
       else localStorage.removeItem(cfg.completedKey);
     }
 
+    // Local-first write (offline-friendly)
     if (nextDone){
       localStorage.setItem(stepKey(id), "1");
       localStorage.setItem(landingKey(), "1");
@@ -55,6 +105,9 @@
       localStorage.removeItem(stepKey(id));
       // Do not clear landing flag here; equipment.html recomputes it accurately.
     }
+
+    // Firebase mirror (best-effort)
+    await fbSetStep(eq, id, nextDone);
   }
 
   function refreshStepBtn(){
@@ -69,10 +122,10 @@
   }
 
   if (stepBtn){
-    stepBtn.addEventListener("click", () => {
+    stepBtn.addEventListener("click", async () => {
       if (!usable()) return;
       const next = !done();
-      setDoneState(next);
+      await setDoneState(next);
       refreshStepBtn();
     });
   }
@@ -81,6 +134,13 @@
   window.addEventListener("storage", refreshStepBtn);
   window.addEventListener("focus", refreshStepBtn);
   window.addEventListener("pageshow", refreshStepBtn);
+
+  // Start Firebase listener (if configured) for cross-device updates
+  if (usable()) fbListenStep(eq, id);
+
+  window.addEventListener("beforeunload", () => {
+    try{ if (fbUnsub) fbUnsub(); }catch(e){}
+  });
 
   // Helper: add eq to INTERNAL links only
   function withEq(href) {
