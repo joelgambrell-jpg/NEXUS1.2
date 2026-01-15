@@ -1,3 +1,13 @@
+/* =========================
+   app.js (DROP-IN REPLACEMENT)
+   - STEP COMPLETE always visible (uses #stepCompleteBtn in form.html)
+   - Adds UNDO STEP COMPLETE support (uses #undoStepBtn in form.html)
+   - Writes keys your equipment/index pages read:
+       nexus_<eq>_step_<id> = "1"
+       nexus_<eq>_landing_complete = "1"
+   - Does NOT auto-complete in embed/image/button modes (manual only)
+   - Preserves your embed/image/magnifier/button rendering + withEq()
+   ========================= */
 (function () {
   const params = new URLSearchParams(location.search);
   const id = (params.get("id") || "").trim();
@@ -36,59 +46,80 @@
   function stepKey(stepId){ return `nexus_${eq || "NO_EQ"}_step_${stepId}`; }
   function landingKey(){ return `nexus_${eq || "NO_EQ"}_landing_complete`; }
 
-  // Keep your original completion key + add NEXUS completion keys
+  // =========================
+  // STEP COMPLETE + UNDO buttons
+  // =========================
+  const stepBtn = document.getElementById("stepCompleteBtn");
+  const undoBtn = document.getElementById("undoStepBtn");
+
+  function isUsable(){ return !!(eq && id); }
+  function isDone(){ return !!(eq && id && localStorage.getItem(stepKey(id)) === "1"); }
+
+  function refreshButtons(){
+    const usable = isUsable();
+    const done = isDone();
+
+    if (stepBtn){
+      // Always visible
+      stepBtn.style.display = "block";
+      stepBtn.disabled = !usable;
+      stepBtn.title = usable ? "" : "Missing eq or id in URL";
+      stepBtn.classList.toggle("complete", done);
+    }
+
+    if (undoBtn){
+      // Always visible
+      undoBtn.style.display = "block";
+      // Only enabled if there is something to undo
+      undoBtn.disabled = !(usable && done);
+      undoBtn.title = (usable && done) ? "" : (usable ? "Nothing to undo" : "Missing eq or id in URL");
+    }
+  }
+
   function markDone() {
+    // keep your original completion key
     if (cfg.completedKey) localStorage.setItem(cfg.completedKey, "true");
+
+    // add NEXUS completion keys
     if (eq && id) {
       localStorage.setItem(stepKey(id), "1");
       localStorage.setItem(landingKey(), "1");
     }
-    refreshStepBtn();
+    refreshButtons();
   }
 
   function unmarkDone() {
+    // clear your original completion key
     if (cfg.completedKey) localStorage.removeItem(cfg.completedKey);
+
+    // clear per-step completion
     if (eq && id) {
       localStorage.removeItem(stepKey(id));
       // Do NOT clear landing key here; equipment.html recomputes it accurately.
     }
-    refreshStepBtn();
-  }
-
-  // =========================
-  // STEP COMPLETE button (always visible)
-  // =========================
-  const stepBtn = document.getElementById("stepCompleteBtn");
-
-  function isDone(){
-    return !!(eq && id && localStorage.getItem(stepKey(id)) === "1");
-  }
-
-  function refreshStepBtn(){
-    if (!stepBtn) return;
-    // Always visible per your request
-    stepBtn.style.display = "block";
-
-    // If eq/id missing, show but disable (prevents bad writes)
-    const usable = !!(eq && id);
-    stepBtn.disabled = !usable;
-    stepBtn.title = usable ? "" : "Missing eq or id in URL";
-
-    stepBtn.classList.toggle("complete", isDone());
+    refreshButtons();
   }
 
   if (stepBtn){
     stepBtn.addEventListener("click", () => {
-      if (!eq || !id) return;
+      if (!isUsable()) return;
       if (isDone()) unmarkDone();
       else markDone();
     });
   }
 
-  refreshStepBtn();
-  window.addEventListener("storage", refreshStepBtn);
-  window.addEventListener("focus", refreshStepBtn);
-  window.addEventListener("pageshow", refreshStepBtn);
+  if (undoBtn){
+    undoBtn.addEventListener("click", () => {
+      if (!isUsable()) return;
+      if (!isDone()) return;
+      unmarkDone();
+    });
+  }
+
+  refreshButtons();
+  window.addEventListener("storage", refreshButtons);
+  window.addEventListener("focus", refreshButtons);
+  window.addEventListener("pageshow", refreshButtons);
 
   // =========================
   // Helper: add eq to INTERNAL links only
@@ -124,7 +155,7 @@
     buttonsWrap.style.display = "none";
     mediaEl.style.display = "block";
     mediaEl.innerHTML = `<iframe class="embed" src="${cfg.embedUrl}" title="${cfg.title || ""}"></iframe>`;
-    // Do NOT auto-complete here; completion is manual via STEP COMPLETE button
+    // Manual completion only
     return;
   }
 
@@ -138,7 +169,7 @@
         <a class="btn" href="${cfg.imageUrl}" target="_blank" rel="noopener noreferrer">Open Image in New Tab</a>
       </div>
     `;
-    // Do NOT auto-complete here; completion is manual via STEP COMPLETE button
+    // Manual completion only
 
     if (cfg.magnifier) {
       const img = document.getElementById("mainImg");
@@ -263,10 +294,7 @@
       a.rel = "noopener noreferrer";
     }
 
-    // NOTE: keep your original behavior, but we do NOT mark complete automatically.
-    // If you want clicking any button to mark complete, uncomment next line:
-    // a.addEventListener("click", markDone);
-
+    // Manual completion only (STEP COMPLETE button)
     buttonsEl.appendChild(a);
   });
 })();
