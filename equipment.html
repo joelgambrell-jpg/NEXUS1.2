@@ -1,6 +1,8 @@
 <!-- =========================
      equipment.html
-     FINAL DROP-IN (realistic lightning on unlocked Energization)
+     DROP-IN REPLACEMENT
+     - Energization button half-size
+     - Lightning bolts radiate outward around it while unlocked
      ========================= -->
 <!doctype html>
 <html lang="en">
@@ -93,133 +95,98 @@
   .bubble .btn{ height:54px; }
 
   /* =========================
-     Energization (Realistic Lightning)
+     Energization (Half-size + Radiating Lightning)
      ========================= */
-  #energizationBtn{
-    height:72px;               /* larger */
-    font-size:18px;
-    font-weight:900;
-    padding:0 30px;
-    border-radius:14px;
-    overflow:hidden;
+  #energizationWrap{
+    position:relative;
+    display:inline-block;
+    margin:12px 0 22px;
   }
 
-  /* Unlocked base */
+  /* "Half size" compared to previous 72px: use 44px height + smaller padding/font */
+  #energizationBtn{
+    width:auto;
+    height:44px;
+    padding:0 14px;
+    font-size:14px;
+    font-weight:900;
+    border-radius:999px;
+    overflow:visible; /* allow lightning to radiate out */
+    z-index:2;
+  }
+
   #energizationBtn.unlocked{
     background:#00ff66 !important;
     color:#002b14 !important;
     border-color:#00ff66 !important;
     box-shadow:
-      0 0 18px rgba(0,255,102,.95),
-      0 0 42px rgba(0,255,102,.70);
+      0 0 14px rgba(0,255,102,.95),
+      0 0 28px rgba(0,255,102,.70);
     animation:energizeGlow 1.6s infinite ease-in-out;
   }
 
-  /* Electric arcs layer 1 */
-  #energizationBtn.unlocked::before{
-    content:"";
-    position:absolute;
-    inset:-30%;
-    background:
-      linear-gradient(90deg,
-        rgba(255,255,255,0) 0%,
-        rgba(255,255,255,.90) 8%,
-        rgba(120,255,190,.65) 12%,
-        rgba(255,255,255,0) 18%,
-        rgba(255,255,255,0) 100%
-      );
-    transform:rotate(-10deg) translateX(-120%);
-    opacity:0.0;
-    filter:blur(0.2px);
-    mix-blend-mode:screen;
-    animation:arcSweep 0.75s infinite steps(2,end);
-    pointer-events:none;
+  @keyframes energizeGlow{
+    0%   { box-shadow:0 0 10px rgba(0,255,102,.80), 0 0 22px rgba(0,255,102,.55); }
+    50%  { box-shadow:0 0 16px rgba(0,255,102,1.00), 0 0 34px rgba(0,255,102,.80); }
+    100% { box-shadow:0 0 10px rgba(0,255,102,.80), 0 0 22px rgba(0,255,102,.55); }
   }
 
-  /* Electric arcs layer 2 (different angle/speed) */
-  #energizationBtn.unlocked::after{
-    content:"";
-    position:absolute;
-    inset:-35%;
-    background:
-      linear-gradient(90deg,
-        rgba(255,255,255,0) 0%,
-        rgba(255,255,255,.85) 10%,
-        rgba(120,255,190,.55) 14%,
-        rgba(255,255,255,0) 22%,
-        rgba(255,255,255,0) 100%
-      );
-    transform:rotate(12deg) translateX(-120%);
-    opacity:0.0;
-    filter:blur(0.6px);
-    mix-blend-mode:screen;
-    animation:arcSweep2 1.05s infinite steps(3,end);
-    pointer-events:none;
-  }
-
-  /* Inner “spark” cracks (adds jaggedness) */
-  #energizationBtn.unlocked .sparkline{
+  /* Radiating lightning container (hidden unless unlocked) */
+  .radiate{
     position:absolute;
     inset:0;
     pointer-events:none;
+    z-index:1;
+    display:none;
   }
-  #energizationBtn.unlocked .sparkline::before,
-  #energizationBtn.unlocked .sparkline::after{
+  #energizationBtn.unlocked + .radiate{ display:block; }
+
+  /* Each bolt */
+  .bolt{
+    position:absolute;
+    left:50%;
+    top:50%;
+    width:2px;
+    height:18px;
+    background:rgba(255,255,255,.92);
+    box-shadow:0 0 10px rgba(255,255,255,.85);
+    transform-origin: 50% 100%;
+    opacity:0;
+    filter:blur(0.2px);
+  }
+
+  /* Jagged look via pseudo segments */
+  .bolt::before,
+  .bolt::after{
     content:"";
     position:absolute;
-    left:12%;
-    right:12%;
-    top:50%;
-    height:2px;
+    left:-1px;
+    width:4px;
+    height:6px;
     background:rgba(255,255,255,.85);
-    box-shadow:0 0 10px rgba(255,255,255,.8);
-    transform:translateY(-50%) skewX(-20deg);
-    opacity:0;
-    animation:sparkFlicker 0.35s infinite steps(2,end);
+    transform:skewX(-22deg);
+    box-shadow:0 0 8px rgba(255,255,255,.6);
   }
-  #energizationBtn.unlocked .sparkline::after{
-    top:62%;
-    left:18%;
-    right:18%;
-    opacity:0;
-    filter:blur(0.3px);
-    animation-duration:0.42s;
-    animation-delay:0.12s;
+  .bolt::before{ top:5px; }
+  .bolt::after{ top:11px; opacity:.75; }
+
+  /* Radiate animation: spawn at button edge then shoot outward and fade */
+  @keyframes radiateOut{
+    0%   { opacity:0; transform:translate(-50%,-50%) rotate(var(--a)) translateY(0) scaleY(0.5); }
+    12%  { opacity:1; }
+    55%  { opacity:.9; transform:translate(-50%,-50%) rotate(var(--a)) translateY(calc(-1 * var(--d))) scaleY(1.2); }
+    100% { opacity:0; transform:translate(-50%,-50%) rotate(var(--a)) translateY(calc(-1 * (var(--d) + 18px))) scaleY(1.5); }
   }
 
-  @keyframes energizeGlow{
-    0%   { box-shadow:0 0 14px rgba(0,255,102,.80), 0 0 34px rgba(0,255,102,.55); }
-    50%  { box-shadow:0 0 22px rgba(0,255,102,1.00), 0 0 52px rgba(0,255,102,.80); }
-    100% { box-shadow:0 0 14px rgba(0,255,102,.80), 0 0 34px rgba(0,255,102,.55); }
-  }
-
-  /* Fast sweep + flicker (layer 1) */
-  @keyframes arcSweep{
-    0%   { opacity:0; transform:rotate(-10deg) translateX(-140%); }
-    10%  { opacity:1; }
-    35%  { opacity:0.85; }
-    55%  { opacity:0.2; }
-    80%  { opacity:0.9; }
-    100% { opacity:0; transform:rotate(-10deg) translateX(140%); }
-  }
-
-  /* Slower sweep (layer 2) */
-  @keyframes arcSweep2{
-    0%   { opacity:0; transform:rotate(12deg) translateX(-150%); }
-    15%  { opacity:0.9; }
-    40%  { opacity:0.25; }
-    60%  { opacity:0.8; }
-    100% { opacity:0; transform:rotate(12deg) translateX(150%); }
-  }
-
-  /* Random-ish spark flicker using steps */
-  @keyframes sparkFlicker{
-    0%   { opacity:0; transform:translateY(-50%) skewX(-20deg) scaleX(0.6); }
-    25%  { opacity:1; transform:translateY(-50%) skewX(-18deg) scaleX(1); }
-    50%  { opacity:0.2; transform:translateY(-50%) skewX(-26deg) scaleX(0.9); }
-    75%  { opacity:1; transform:translateY(-50%) skewX(-14deg) scaleX(1.05); }
-    100% { opacity:0; transform:translateY(-50%) skewX(-22deg) scaleX(0.7); }
-  }
+  /* Staggered bolts around the button */
+  .b1 { --a:  0deg;  --d: 22px; animation:radiateOut 1.05s infinite ease-out; }
+  .b2 { --a: 45deg;  --d: 24px; animation:radiateOut 1.15s infinite ease-out .10s; }
+  .b3 { --a: 90deg;  --d: 22px; animation:radiateOut 1.00s infinite ease-out .20s; }
+  .b4 { --a:135deg;  --d: 24px; animation:radiateOut 1.20s infinite ease-out .05s; }
+  .b5 { --a:180deg;  --d: 22px; animation:radiateOut 1.10s infinite ease-out .18s; }
+  .b6 { --a:225deg;  --d: 24px; animation:radiateOut 1.25s infinite ease-out .28s; }
+  .b7 { --a:270deg;  --d: 22px; animation:radiateOut 1.05s infinite ease-out .14s; }
+  .b8 { --a:315deg;  --d: 24px; animation:radiateOut 1.18s infinite ease-out .24s; }
 </style>
 </head>
 
@@ -240,12 +207,20 @@
     </div>
   </div>
 
-  <div style="margin:12px 0 22px;">
-    <a class="btn locked" id="energizationBtn" href="#" aria-disabled="true">
-      Energization
-      <!-- extra layer for crackle lines when unlocked -->
-      <span class="sparkline" aria-hidden="true"></span>
-    </a>
+  <!-- Energization (small) + radiating bolts when unlocked -->
+  <div id="energizationWrap">
+    <a class="btn locked" id="energizationBtn" href="#" aria-disabled="true">Energization</a>
+
+    <div class="radiate" aria-hidden="true">
+      <span class="bolt b1"></span>
+      <span class="bolt b2"></span>
+      <span class="bolt b3"></span>
+      <span class="bolt b4"></span>
+      <span class="bolt b5"></span>
+      <span class="bolt b6"></span>
+      <span class="bolt b7"></span>
+      <span class="bolt b8"></span>
+    </div>
   </div>
 
   <div class="grid">
@@ -271,78 +246,83 @@
 </div>
 
 <script>
-const qs=new URLSearchParams(location.search);
-const eq=(qs.get("eq")||"").trim();
-document.getElementById("eqLabel").textContent=eq?`Equipment: ${eq}`:"Missing equipment ID";
+  const qs = new URLSearchParams(location.search);
+  const eq = (qs.get("eq") || "").trim();
+  document.getElementById("eqLabel").textContent = eq ? `Equipment: ${eq}` : "Missing equipment ID";
 
-function link(id){return`task.html?id=${encodeURIComponent(id)}${eq?`&eq=${encodeURIComponent(eq)}`:""}`;}
-function stepKey(id){return`nexus_${eq||"NO_EQ"}_step_${id}`;}
-
-const taskSteps=[
-  {id:"rif",btn:"rifBtn"},
-  {id:"meg",btn:"lvtBtn"},
-  {id:"torque",btn:"torqueBtn"},
-  {id:"l2",btn:"l2Btn"},
-  {id:"prefod",btn:"prefodBtn"},
-  {id:"fpv_photo",btn:"finishedPhotoBtn"}
-];
-
-const refs=[
-  {id:"construction",btn:"constructionBtn"},
-  {id:"phenolic",btn:"phenolicBtn"},
-  {id:"transformer",btn:"transformerBtn"},
-  {id:"supporting",btn:"supportingBtn"}
-];
-
-[...taskSteps,...refs].forEach(s=>{
-  const el=document.getElementById(s.btn);
-  if(el) el.href=link(s.id);
-});
-
-const fill=document.getElementById("progressFill");
-const txt=document.getElementById("progressText");
-const cnt=document.getElementById("progressCount");
-const eBtn=document.getElementById("energizationBtn");
-
-function refresh(){
-  let done=0;
-  taskSteps.forEach(s=>{
-    const el=document.getElementById(s.btn);
-    const ok=localStorage.getItem(stepKey(s.id))==="1";
-    el.classList.toggle("complete",ok);
-    if(ok) done++;
-  });
-
-  // Reference buttons never show as complete
-  refs.forEach(s=>{
-    const el=document.getElementById(s.btn);
-    if(el) el.classList.remove("complete");
-  });
-
-  const pct=Math.round((done/taskSteps.length)*100);
-  fill.style.width=`${pct}%`;
-  txt.textContent=`Progress: ${pct}%`;
-  cnt.textContent=`${done}/${taskSteps.length}`;
-
-  if(pct===100){
-    eBtn.classList.remove("locked");
-    eBtn.classList.add("unlocked");
-    eBtn.href=`energization.html${eq?`?eq=${encodeURIComponent(eq)}`:""}`;
-    eBtn.style.pointerEvents="auto";
-    eBtn.removeAttribute("aria-disabled");
-  }else{
-    eBtn.classList.add("locked");
-    eBtn.classList.remove("unlocked");
-    eBtn.href="#";
-    eBtn.style.pointerEvents="none";
-    eBtn.setAttribute("aria-disabled","true");
+  function link(id){
+    return `task.html?id=${encodeURIComponent(id)}${eq ? `&eq=${encodeURIComponent(eq)}` : ""}`;
   }
-}
+  function stepKey(id){
+    return `nexus_${eq || "NO_EQ"}_step_${id}`;
+  }
 
-refresh();
-window.addEventListener("focus",refresh);
-window.addEventListener("storage",refresh);
-window.addEventListener("pageshow",refresh);
+  const taskSteps = [
+    {id:"rif",btn:"rifBtn"},
+    {id:"meg",btn:"lvtBtn"},
+    {id:"torque",btn:"torqueBtn"},
+    {id:"l2",btn:"l2Btn"},
+    {id:"prefod",btn:"prefodBtn"},
+    {id:"fpv_photo",btn:"finishedPhotoBtn"}
+  ];
+
+  const refs = [
+    {id:"construction",btn:"constructionBtn"},
+    {id:"phenolic",btn:"phenolicBtn"},
+    {id:"transformer",btn:"transformerBtn"},
+    {id:"supporting",btn:"supportingBtn"}
+  ];
+
+  [...taskSteps, ...refs].forEach(s => {
+    const el = document.getElementById(s.btn);
+    if (el) el.href = link(s.id);
+  });
+
+  const fill = document.getElementById("progressFill");
+  const txt  = document.getElementById("progressText");
+  const cnt  = document.getElementById("progressCount");
+  const eBtn = document.getElementById("energizationBtn");
+
+  function refresh(){
+    let done = 0;
+
+    taskSteps.forEach(s => {
+      const el = document.getElementById(s.btn);
+      const ok = localStorage.getItem(stepKey(s.id)) === "1";
+      el.classList.toggle("complete", ok);
+      if (ok) done++;
+    });
+
+    // References never show complete
+    refs.forEach(s => {
+      const el = document.getElementById(s.btn);
+      if (el) el.classList.remove("complete");
+    });
+
+    const pct = Math.round((done / taskSteps.length) * 100);
+    fill.style.width = `${pct}%`;
+    txt.textContent = `Progress: ${pct}%`;
+    cnt.textContent = `${done}/${taskSteps.length}`;
+
+    if (pct === 100){
+      eBtn.classList.remove("locked");
+      eBtn.classList.add("unlocked");
+      eBtn.href = `energization.html${eq ? `?eq=${encodeURIComponent(eq)}` : ""}`;
+      eBtn.style.pointerEvents = "auto";
+      eBtn.removeAttribute("aria-disabled");
+    } else {
+      eBtn.classList.add("locked");
+      eBtn.classList.remove("unlocked");
+      eBtn.href = "#";
+      eBtn.style.pointerEvents = "none";
+      eBtn.setAttribute("aria-disabled","true");
+    }
+  }
+
+  refresh();
+  window.addEventListener("focus", refresh);
+  window.addEventListener("storage", refresh);
+  window.addEventListener("pageshow", refresh);
 </script>
 </body>
 </html>
